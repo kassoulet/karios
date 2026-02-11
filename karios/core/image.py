@@ -29,6 +29,8 @@ import numpy as np
 from numpy.typing import NDArray
 from osgeo import gdal, osr
 
+from karios.core.utils import sanitize_filename
+
 logger = logging.getLogger(__name__)
 
 
@@ -168,7 +170,7 @@ class GdalRasterImage:
 
     def __init__(self, filename):
         self.filepath = filename
-        self.file_name = os.path.basename(self.filepath)
+        self.file_name = sanitize_filename(self.filepath)
         self._read_header()
         self._array = None
 

@@ -16,6 +16,64 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+import re
+
+
+def sanitize_filename(filename: str) -> str:
+    """Sanitize a filename by removing or replacing dangerous characters.
+
+    Args:
+        filename (str): The filename to sanitize.
+
+    Returns:
+        str: The sanitized filename.
+    """
+    if not filename:
+        return "unnamed"
+
+    # 1. Handle both types of separators to be platform-independent
+    filename = filename.replace("\\", "/")
+
+    # 2. Get the basename
+    filename = os.path.basename(filename)
+
+    # 3. Replace non-alphanumeric (except ._-) with underscore
+    # This also removes potential path separators like / or \ on different OS
+    filename = re.sub(r"[^\w\.\-]", "_", filename)
+
+    # 4. Prevent traversal or empty names after sanitization
+    if filename in ("..", ".", ""):
+        return "unnamed"
+
+    # 5. Handle Windows reserved names
+    reserved_names = {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        "COM1",
+        "COM2",
+        "COM3",
+        "COM4",
+        "COM5",
+        "COM6",
+        "COM7",
+        "COM8",
+        "COM9",
+        "LPT1",
+        "LPT2",
+        "LPT3",
+        "LPT4",
+        "LPT5",
+        "LPT6",
+        "LPT7",
+        "LPT8",
+        "LPT9",
+    }
+    if filename.upper() in reserved_names:
+        return f"_{filename}"
+
+    return filename
 
 
 def get_filename(path: str) -> str:
@@ -27,4 +85,4 @@ def get_filename(path: str) -> str:
     Returns:
         str: filename without extension
     """
-    return os.path.splitext(os.path.basename(path))[0]
+    return os.path.splitext(sanitize_filename(path))[0]

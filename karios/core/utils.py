@@ -28,6 +28,9 @@ def sanitize_filename(filename: str) -> str:
     Returns:
         str: The sanitized filename.
     """
+    # Ensure filename is a string (e.g. if it's a Path object)
+    filename = str(filename)
+
     if not filename:
         return "unnamed"
 

@@ -24,18 +24,8 @@ jobs:
       run: |
         python3 -m pip install --upgrade pip
         pip3 install pytest pytest-cov
-    
-    - name: Test plugin import
-      run: |
-        cd ${{ github.workspace }}
-        python3 -c "from karios_qgis import KariosQGISPlugin; print('✓ Plugin imports')"
-    
-    - name: Test dependency checker
-      run: |
-        cd ${{ github.workspace }}
-        python3 -c "from dependency_checker import DependencyChecker; print('✓ Dependency checker imports')"
-    
-    - name: Test auto-install simulation
+
+    - name: Test plugin and auto-install
       run: |
         cd ${{ github.workspace }}
         python3 tests/test_install.py

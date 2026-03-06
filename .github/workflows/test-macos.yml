@@ -1,0 +1,51 @@
+name: Test macOS
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-macos:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+    
+    - name: Install test dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        pip3 install pytest pytest-cov
+    
+    - name: Test plugin import
+      run: |
+        cd ${{ github.workspace }}
+        python3 -c "from karios_qgis import KariosQGISPlugin; print('✓ Plugin imports')"
+    
+    - name: Test dependency checker
+      run: |
+        cd ${{ github.workspace }}
+        python3 -c "from dependency_checker import DependencyChecker; print('✓ Dependency checker imports')"
+    
+    - name: Test auto-install simulation
+      run: |
+        cd ${{ github.workspace }}
+        python3 tests/test_install.py
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-macos
+        path: |
+          test-results.xml
+          *.log

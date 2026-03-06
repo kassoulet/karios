@@ -1,0 +1,26 @@
+# KARIOS QGIS Plugin Dependencies
+# ================================
+#
+# This file lists the Python dependencies required by the KARIOS plugin.
+#
+# IMPORTANT FOR QGIS PLUGIN:
+# - numpy is PROVIDED BY QGIS - DO NOT INSTALL via pip
+# - opencv-python-headless, pandas, scipy, scikit-image need to be installed
+#
+# Usage in QGIS:
+#   The plugin will automatically check for these dependencies and install
+#   opencv-python-headless, pandas, scipy, and scikit-image.
+#   NumPy will be checked but not installed (provided by QGIS).
+
+# Core dependencies - need to be installed via pip
+opencv-python-headless>=4.0.0
+pandas>=1.3.0
+scipy>=1.7.0
+scikit-image>=0.19.0
+
+# Provided by QGIS - DO NOT INSTALL via pip in QGIS environment
+# Listed here for reference only:
+# numpy>=1.20.0
+
+# Optional visualization (not required for headless processing)
+# matplotlib>=3.4.0

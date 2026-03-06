@@ -1,0 +1,63 @@
+name: Test All Platforms
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  linux:
+    name: Linux Tests
+    uses: ./.github/workflows/test-linux.yml
+  
+  windows:
+    name: Windows Tests
+    uses: ./.github/workflows/test-windows.yml
+  
+  macos:
+    name: macOS Tests
+    uses: ./.github/workflows/test-macos.yml
+  
+  summary:
+    name: Test Summary
+    needs: [linux, windows, macos]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Check test results
+      run: |
+        echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.linux.result }}" == "success" ]; then
+          echo "✅ Linux: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Linux: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.windows.result }}" == "success" ]; then
+          echo "✅ Windows: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Windows: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        if [ "${{ needs.macos.result }}" == "success" ]; then
+          echo "✅ macOS: PASSED" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ macOS: FAILED" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ needs.linux.result }}" == "success" ] && \
+           [ "${{ needs.windows.result }}" == "success" ] && \
+           [ "${{ needs.macos.result }}" == "success" ]; then
+          echo "## ✅ ALL TESTS PASSED" >> $GITHUB_STEP_SUMMARY
+          exit 0
+        else
+          echo "## ❌ SOME TESTS FAILED" >> $GITHUB_STEP_SUMMARY
+          exit 1
+        fi

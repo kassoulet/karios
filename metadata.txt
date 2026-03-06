@@ -1,0 +1,29 @@
+[general]
+name=KARIOS Processing
+qgisMinimumVersion=3.28
+description=Apply KARIOS processing to raster images for geometric accuracy analysis using KLT-based image matching
+version=1.0.0
+author=KARIOS QGIS Plugin
+email=example@example.com
+
+about=This plugin integrates the KARIOS (KLT-based Algorithm for Registration of Images from Observing Systems) library into QGIS. It allows you to analyze geometric deformations between two raster images using feature point matching.
+
+    Features:
+    - Image matching using KLT (Kanade-Lucas-Tomasi) algorithm
+    - Geometric accuracy analysis with statistical metrics (RMSE, CE90, etc.)
+    - Displacement analysis in both line and pixel directions
+    - Optional DEM-based analysis for altitude-dependent errors
+    - Mask support to exclude invalid pixels
+    - Generate displacement rasters and key point chips
+
+    Requirements:
+    - KARIOS library (included as git submodule)
+    - Python 3.8+
+    - OpenCV
+
+tracker=https://github.com/telespazio-tim/karios/issues
+repository=https://github.com/telespazio-tim/karios
+category=Analysis
+icon=resources/tpz.png
+experimental=False
+deprecated=False

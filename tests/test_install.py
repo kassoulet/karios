@@ -85,19 +85,23 @@ def test_auto_install():
             @staticmethod
             def pushMessage(title, msg, level=0, duration=0):
                 logger.info(f"[MessageBar] {title}: {msg}")
-            
+
             @staticmethod
             def pushSuccess(title, msg):
                 logger.info(f"[Success] {title}: {msg}")
-            
+
             @staticmethod
             def pushWarning(title, msg):
                 logger.warning(f"[Warning] {title}: {msg}")
-            
+
             @staticmethod
             def pushCritical(title, msg):
                 logger.error(f"[Critical] {title}: {msg}")
-        
+
+            @staticmethod
+            def pushInfo(title, msg):
+                logger.info(f"[Info] {title}: {msg}")
+
         class MockIface:
             messageBar = MockMessageBar
         

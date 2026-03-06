@@ -25,10 +25,10 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
 # Import the processing provider
-from .processing.provider import KariosProvider
+from processing.provider import KariosProvider
 
 # Import dependency checker
-from .dependency_checker import (
+from dependency_checker import (
     DependencyChecker,
     DependencyInfo,
     check_and_install_dependencies,

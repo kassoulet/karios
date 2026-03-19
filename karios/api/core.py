@@ -207,6 +207,11 @@ class KariosAPI:
         else:
             points = self._get_match_points(resume, monitored_image, reference_image, mask)
 
+        # Filter out key points with specified DN values
+        points = self._filter_by_dn_values(
+            points, monitored_image, reference_image, self._runtime_configuration.no_values
+        )
+
         return MatchResult(
             points=points,
             reference_image=reference_image,
@@ -508,6 +513,65 @@ class KariosAPI:
             """
             )
         return dem
+
+    def _filter_by_dn_values(
+        self,
+        points: pd.DataFrame,
+        monitored_image: GdalRasterImage,
+        reference_image: GdalRasterImage,
+        no_values: Optional[list[int]],
+    ) -> pd.DataFrame:
+        """Filter out key points where reference or monitored image has specified DN values.
+
+        Args:
+            points: DataFrame containing match points with x0, y0 coordinates
+            monitored_image: Monitored image GdalRasterImage object
+            reference_image: Reference image GdalRasterImage object
+            no_values: List of DN values to filter out. If None or empty, no filtering is applied.
+
+        Returns:
+            Filtered DataFrame with key points having excluded DN values removed
+        """
+        if not no_values:
+            logger.info("No DN value filtering requested")
+            return points
+
+        logger.info("Filtering key points with DN values: %s", no_values)
+
+        # Convert coordinates to integers for pixel access
+        x_coords = points["x0"].astype(int).values
+        y_coords = points["y0"].astype(int).values
+
+        # Get DN values at key point locations for both images
+        ref_values = reference_image.array[y_coords, x_coords]
+        mon_values = monitored_image.array[y_coords, x_coords]
+
+        # Create mask for points to keep (points where neither image has excluded values)
+        keep_mask = np.ones(len(points), dtype=bool)
+
+        for no_value in no_values:
+            # Mark points where reference or monitored image has the excluded value
+            exclude_mask = (ref_values == no_value) | (mon_values == no_value)
+            keep_mask &= ~exclude_mask
+            excluded_count = np.sum(exclude_mask)
+            if excluded_count > 0:
+                logger.info(
+                    "Excluded %d key points with DN value %d (reference or monitored image)",
+                    excluded_count,
+                    no_value,
+                )
+
+        # Apply filter
+        filtered_points = points[keep_mask].copy()
+
+        logger.info(
+            "Filtered %d/%d key points (%.2f%% removed)",
+            len(points) - len(filtered_points),
+            len(points),
+            (len(points) - len(filtered_points)) / len(points) * 100 if len(points) > 0 else 0,
+        )
+
+        return filtered_points
 
     def _detect_large_offset(
         self, reference_image: GdalRasterImage, monitored_image: GdalRasterImage

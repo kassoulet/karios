@@ -59,6 +59,7 @@ click.rich_click.OPTION_GROUPS = {
                 "--generate-key-points-mask",
                 "--generate-intermediate-product",
                 "--generate-kp-chips",
+                "--no-value",
                 "--dem-description",
             ],
         },
@@ -194,6 +195,14 @@ def cli() -> None:
     """,
 )
 @click.option(
+    "--no-value",
+    type=int,
+    multiple=True,
+    default=None,
+    help="Filter out key points where reference or monitored image has this DN value. Can be used multiple times (e.g., --no-value 0 --no-value 255)",
+    show_default=True,
+)
+@click.option(
     "--dem-description",
     type=str,
     default=None,
@@ -226,6 +235,7 @@ def process(
     generate_key_points_mask: bool,
     generate_intermediate_product: bool,
     generate_kp_chips: bool,
+    no_value: tuple[int, ...],
     title_prefix: Optional[str],
     dem_description: Optional[str],
     enable_large_shift_detection: bool,
@@ -291,6 +301,7 @@ def process(
             generate_kp_chips=generate_kp_chips,
             dem_description=dem_description,
             enable_large_shift_detection=enable_large_shift_detection,
+            no_values=list(no_value) if no_value else None,
         )
 
         # Validate configuration

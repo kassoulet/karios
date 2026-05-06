@@ -485,28 +485,29 @@ def test_match_tile_auto_ksize_selects_best_inlier_ratio():
     best_count = 8
 
     def mock_tracker(ref_data, image_data, mask, conf, p0=None):
-        # We can't easily see mon_ksize/ref_ksize here anymore without more complex mocking,
-        # but we can verify that the best result is picked based on what we return.
-        # Since we are mocking cv2.goodFeaturesToTrack to return a unique p0 per ref_ksize,
-        # we can use that to distinguish.
+        # In the optimized code, p0 is passed from our pre-computed ref_p0s dict.
+        # We've mocked cv2.goodFeaturesToTrack to return a MagicMock for p0.
+        # We can use the mock's 'idx' attribute to identify which ksize was used.
         p0_idx = getattr(p0, "idx", -1)
         count = best_count if p0_idx == 2 else 1
         df = pd.DataFrame({"x0": list(range(count)), "y0": list(range(count)),
                            "dx": [0] * count, "dy": [0] * count, "score": [0.9] * count})
         return df, ninit
 
-    # Mock cv2.goodFeaturesToTrack to return something unique per ksize
+    # Mock cv2.goodFeaturesToTrack to return a unique mock per ksize
     def mock_gftt(lap, mask, **kwargs):
-        # lap is the Laplacian for a specific ksize
-        # we can tag it
-        p0 = np.array([[[10, 20]]], dtype=np.float32)
+        # lap is a MagicMock for a Laplacian for a specific ksize
+        p0 = MagicMock(spec=np.ndarray)
         p0.idx = getattr(lap, "ksize_idx", -1)
         return p0
 
-    # Mock cv2.Laplacian to return tagged arrays
+    # Mock cv2.Laplacian to return tagged MagicMocks
     def mock_laplacian(src, ddepth, ksize):
-        lap = np.ones((50, 50), dtype=np.uint8)
+        lap = MagicMock(spec=np.ndarray)
         lap.ksize_idx = LAPLACIAN_AUTO_CANDIDATES.index(ksize)
+        # Mock shape and dtype which might be used
+        lap.shape = (50, 50)
+        lap.dtype = np.uint8
         return lap
 
     with patch("karios.matcher.klt.klt_tracker", side_effect=mock_tracker), \

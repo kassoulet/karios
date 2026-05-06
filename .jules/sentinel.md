@@ -1,0 +1,4 @@
+## 2025-05-15 - [Path Traversal and XSS Prevention]
+**Vulnerability:** Filenames extracted from input paths were used directly in output products and logging, posing path traversal and command injection risks. Additionally, these filenames and user-provided title prefixes were injected into HTML reports without escaping, leading to XSS vulnerabilities.
+**Learning:** Even internal display names and log entries can be vectors for attacks if they originate from user-controlled paths. HTML report generation is a high-risk area for XSS if template engines don't auto-escape or if strings are manually injected.
+**Prevention:** Implement a robust `sanitize_filename` utility that uses a whitelist approach and handle recursive path traversal. Always use `html.escape` for any user-controlled string injected into HTML reports.

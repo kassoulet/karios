@@ -18,6 +18,7 @@
 """Module to generate HTML reports for KARIOS results."""
 
 import datetime
+import html
 import logging
 import shutil
 from pathlib import Path
@@ -517,15 +518,15 @@ class HtmlReportGenerator:
             products_link=products_link,
             chips_link=chips_link,
             generation_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            monitored_image=self.match_result.monitored_image.file_name,
-            reference_image=self.match_result.reference_image.file_name,
-            mask_file=self.match_result.mask.file_name if self.match_result.mask else "None",
-            dem_file=self.dem_file_path.name if self.dem_file_path else "None",
+            monitored_image=html.escape(self.match_result.monitored_image.file_name),
+            reference_image=html.escape(self.match_result.reference_image.file_name),
+            mask_file=html.escape(self.match_result.mask.file_name) if self.match_result.mask else "None",
+            dem_file=html.escape(self.dem_file_path.name) if self.dem_file_path else "None",
             pixel_size=self.runtime_config.pixel_size if self.runtime_config.pixel_size else "Auto",
             large_shift_detection=(
                 "Enabled" if self.runtime_config.enable_large_shift_detection else "Disabled"
             ),
-            title_prefix=self.runtime_config.title_prefix or "None",
+            title_prefix=html.escape(self.runtime_config.title_prefix) if self.runtime_config.title_prefix else "None",
             matched_points=len(self.match_result.points),
             valid_pixels=self.accuracy_analysis.valid_pixels,
             total_pixels=self.accuracy_analysis.total_pixels,
@@ -566,7 +567,7 @@ class HtmlReportGenerator:
 
             products_content = PRODUCTS_TEMPLATE.format(
                 css_styles=CSS_STYLES,
-                title_prefix=self.runtime_config.title_prefix or "KARIOS",
+                title_prefix=html.escape(self.runtime_config.title_prefix) if self.runtime_config.title_prefix else "KARIOS",
                 chips_link=chips_link,
                 products_rows=products_rows,
             )
@@ -603,7 +604,7 @@ class HtmlReportGenerator:
 
             chips_content = CHIPS_TEMPLATE.format(
                 css_styles=CSS_STYLES,
-                title_prefix=self.runtime_config.title_prefix or "KARIOS",
+                title_prefix=html.escape(self.runtime_config.title_prefix) if self.runtime_config.title_prefix else "KARIOS",
                 products_link=products_link,
                 chips_vrt_links=chips_vrt_links,
                 chips_section_html=chips_section_html,

@@ -488,8 +488,10 @@ def test_match_tile_auto_ksize_selects_best_inlier_ratio():
         # In the optimized code, p0 is passed from our pre-computed ref_p0s dict.
         # We've mocked cv2.goodFeaturesToTrack to return a MagicMock for p0.
         # We can use the mock's 'idx' attribute to identify which ksize was used.
-        p0_idx = getattr(p0, "idx", -1)
-        count = best_count if p0_idx == 2 else 1
+        p0_idx = getattr(p0, "ksize_idx", -1)
+        img_idx = getattr(image_data, "ksize_idx", -1)
+
+        count = best_count if (img_idx == 1 and p0_idx == 2) else 1
         df = pd.DataFrame({"x0": list(range(count)), "y0": list(range(count)),
                            "dx": [0] * count, "dy": [0] * count, "score": [0.9] * count})
         return df, ninit
@@ -498,7 +500,7 @@ def test_match_tile_auto_ksize_selects_best_inlier_ratio():
     def mock_gftt(lap, mask, **kwargs):
         # lap is a MagicMock for a Laplacian for a specific ksize
         p0 = MagicMock(spec=np.ndarray)
-        p0.idx = getattr(lap, "ksize_idx", -1)
+        p0.ksize_idx = getattr(lap, "ksize_idx", -1)
         return p0
 
     # Mock cv2.Laplacian to return tagged MagicMocks

@@ -4,9 +4,6 @@ import html
 import re
 import os
 import sys
-
-# To avoid complex dependencies of the karios package,
-# we load the module directly from its file path.
 import importlib.util
 
 def load_utils():
@@ -14,9 +11,6 @@ def load_utils():
     file_path = os.path.join(os.getcwd(), 'karios', 'core', 'utils.py')
     spec = importlib.util.spec_from_file_location(module_name, file_path)
     module = importlib.util.module_from_spec(spec)
-    # We don't want to register it in sys.modules because it might
-    # conflict with other things if we are not careful,
-    # but for a standalone test it's fine.
     spec.loader.exec_module(module)
     return module
 

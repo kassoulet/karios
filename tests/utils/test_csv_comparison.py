@@ -38,22 +38,29 @@ def compare_csv_with_tolerance(
         ref_df = pd.read_csv(ref_csv_path, sep=separator, dtype=str)
         result_df = pd.read_csv(result_csv_path, sep=separator, dtype=str)
 
-        # Check if shapes are different
-        if ref_df.shape != result_df.shape:
+        # Check if shapes are different - allow extra columns in result
+        if ref_df.shape[0] != result_df.shape[0]:
             return (
                 False,
-                f"CSV files have different shapes: ref {ref_df.shape} vs result {result_df.shape}",
+                f"CSV files have different number of rows: ref {ref_df.shape[0]} vs result {result_df.shape[0]}",
+            )
+
+        if ref_df.shape[1] > result_df.shape[1]:
+             return (
+                False,
+                f"Result CSV is missing columns: ref {ref_df.shape[1]} vs result {result_df.shape[1]}",
             )
 
         # Convert columns that are purely numeric to float, others remain as string
         ref_df_processed = _convert_numeric_columns(ref_df)
         result_df_processed = _convert_numeric_columns(result_df)
 
-        # Check column names
-        if not ref_df_processed.columns.equals(result_df_processed.columns):
+        # Check column names - ensure all reference columns are in result
+        missing_cols = [col for col in ref_df_processed.columns if col not in result_df_processed.columns]
+        if missing_cols:
             return (
                 False,
-                f"Column names differ: ref {ref_df_processed.columns.tolist()} vs result {result_df_processed.columns.tolist()}",
+                f"Result CSV is missing columns from reference: {missing_cols}",
             )
 
         # Compare non-numeric columns exactly

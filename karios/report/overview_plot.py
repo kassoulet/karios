@@ -122,18 +122,19 @@ class OverviewPlot(AbstractPlot):
         axes.text(x=0, y=0.5, s=text, size="14", ha="left", va="center")
 
     def _plot_image(self, axes: Axes, img: GdalRasterImage, title: str) -> None:
-        """Plot image with adaptive contrast"""
+        """Plot image with adaptive contrast for satellite imagery.
+
+        Uses cumulative count cut (0.5%-99.5%) for consistent visualization.
+        """
         axes.set_title(title)
 
-        # Adaptive contrast enhancement
-        valid_pixels = img.array[img.array != 0]
+        valid_pixels = img.array[np.isfinite(img.array) & (img.array != 0)]
         if len(valid_pixels) > 0:
-            mean_val = np.mean(valid_pixels)
-            std_val = np.std(valid_pixels)
-            v_min = max(0, mean_val - 4 * std_val)
-            v_max = mean_val + 4 * std_val
+            v_min = np.percentile(valid_pixels, 0.5)
+            v_max = np.percentile(valid_pixels, 99.5)                
         else:
-            v_min, v_max = np.nanmin(img.array), np.nanmax(img.array)
+            v_min = np.nanmin(img.array)
+            v_max = np.nanmax(img.array)
 
         logger.debug(
             "%s : min %s / %s , max %s / %s",

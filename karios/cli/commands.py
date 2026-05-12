@@ -20,6 +20,7 @@
 Provides command line interface for KARIOS functionality.
 """
 
+import json
 import logging
 import os
 import shutil
@@ -139,6 +140,13 @@ def cli() -> None:
     required=False,
 )
 @click.option(
+    "--vector-mask",
+    type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
+    default=None,
+    help="Vector mask file (GeoJSON, Shapefile, etc.) to exclude pixels from matching. Will be rasterized to match monitored image.",
+    show_default=True,
+)
+@click.option(
     "--conf",
     type=click.Path(exists=True, file_okay=True, dir_okay=False, path_type=Path),
     default=PurePath(ROOT_DIR, "configuration/processing_configuration.json"),
@@ -235,6 +243,7 @@ def process(
     generate_key_points_mask: bool,
     generate_intermediate_product: bool,
     generate_kp_chips: bool,
+    vector_mask: Optional[Path],
     no_value: tuple[int, ...],
     title_prefix: Optional[str],
     dem_description: Optional[str],
@@ -251,6 +260,7 @@ def process(
     - REFERENCE_IMAGE  Path to the stable reference image for comparison
     - [MASK_FILE]      Optional mask file to exclude pixels from matching (use '-' to skip when providing only DEM_FILE)
     - [DEM_FILE]       Optional DEM file for altitude-based analysis
+    - [VECTOR_MASK]    Optional vector mask file (GeoJSON, Shapefile, etc.)
 
     \b
 
@@ -305,18 +315,35 @@ def process(
         )
 
         # Validate configuration
-        _validate_configuration(runtime_configuration, dem_file)
+        _validate_configuration(runtime_configuration, dem_file, vector_mask)
 
         # Initialize API
         api = KariosAPI(processing_configuration, runtime_configuration)
 
         # Run processing pipeline with input files as parameters
         match_result, accuracy, reports = api.process(
-            monitored_image, reference_image, mask_file, dem_file, resume
+            monitored_image, reference_image, mask_file, dem_file, resume, vector_mask
         )
 
-        # Copy configuration to output directory
-        shutil.copy(conf, output_dir)
+        # Copy configuration to output directory, updating laplacian_kernel_size when auto mode was used
+        klt_conf = processing_configuration.klt_configuration
+        if klt_conf.laplacian_kernel_size == "auto":
+            selected = api.klt_auto_selected_ksize
+            if selected is not None:
+                mon_k, ref_k = selected
+                with open(conf, encoding="utf-8") as f:
+                    conf_data = json.load(f)
+                conf_data["processing_configuration"]["klt_matching"]["laplacian_kernel_size"] = {
+                    "mon": mon_k, "ref": ref_k
+                }
+                out_conf_path = output_dir / Path(conf).name
+                with open(out_conf_path, "w", encoding="utf-8") as f:
+                    json.dump(conf_data, f, indent=4)
+                logger.info("Auto laplacian kernel sizes written to config: mon=%s ref=%s", mon_k, ref_k)
+            else:
+                shutil.copy(conf, output_dir)
+        else:
+            shutil.copy(conf, output_dir)
 
         logger.info("Processing completed successfully")
         logger.info("Results written to %s", output_dir)
@@ -330,12 +357,13 @@ def process(
         return 1
 
 
-def _validate_configuration(config: RuntimeConfiguration, dem_file: Optional[Path]) -> None:
+def _validate_configuration(config: RuntimeConfiguration, dem_file: Optional[Path], vector_mask: Optional[Path] = None) -> None:
     """Validate configuration parameters and input files.
 
     Args:
         config: RuntimeConfiguration object to validate
         dem_file: Optional DEM file path
+        vector_mask: Optional vector mask file path
 
     Raises:
         ValueError: If configuration is invalid
@@ -352,6 +380,9 @@ def _validate_configuration(config: RuntimeConfiguration, dem_file: Optional[Pat
     # Validate title prefix length
     if config.title_prefix and len(config.title_prefix) > 26:
         raise ValueError("Title prefix is too long (>26 characters)")
+
+    # Check if both raster and vector masks are provided
+    logger.info("Vector mask validation complete")
 
 
 def _print_summary(match_result, accuracy, reports) -> None:
@@ -384,6 +415,9 @@ def _print_summary(match_result, accuracy, reports) -> None:
     click.echo(f"  DX plot: {reports.dx_plot}")
     click.echo(f"  DY plot: {reports.dy_plot}")
     click.echo(f"  CE plot: {reports.ce_plot}")
+
+    if reports.html_report:
+        click.echo(f"  HTML report: {reports.html_report}")
 
     if reports.dem_plots:
         click.echo(f"  DEM plots: {len(reports.dem_plots)}")

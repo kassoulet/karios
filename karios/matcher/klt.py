@@ -18,9 +18,12 @@
 
 """KTL module."""
 
+import itertools
 import logging
 import os
+from collections import Counter
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 
 import cv2
 import numpy as np
@@ -32,6 +35,18 @@ from karios.core.configuration import KLTConfiguration
 from karios.core.image import GdalRasterImage
 
 logger = logging.getLogger(__name__)
+
+LAPLACIAN_AUTO_CANDIDATES = [3, 5, 7, 9, 11]
+
+
+def _to_uint8(arr: np.ndarray) -> np.ndarray:
+    """Normalize an array to uint8, no-op if already uint8."""
+    if arr.dtype == np.uint8:
+        return arr
+    arr_min, arr_max = float(np.nanmin(arr)), float(np.nanmax(arr))
+    if arr_max > arr_min:
+        return ((arr - arr_min) / (arr_max - arr_min) * 255).astype(np.uint8)
+    return np.zeros_like(arr, dtype=np.uint8)
 
 
 def __filter_outliers(x0, y0, x1, y1, score):
@@ -66,7 +81,11 @@ def __filter_outliers(x0, y0, x1, y1, score):
 
 
 def klt_tracker(
-    ref_data: NDArray, image_data: NDArray, mask: NDArray, conf: KLTConfiguration
+    ref_data: NDArray,
+    image_data: NDArray,
+    mask: NDArray,
+    conf: KLTConfiguration,
+    p0: NDArray | None = None,
 ) -> tuple[DataFrame, int] | None:
     """Run KLT.
     See :
@@ -78,27 +97,28 @@ def klt_tracker(
         image_data (NDArray): data to match
         mask (NDArray): Optional region of interest.
             It specifies the region in which the corners are detected for `cv2.goodFeaturesToTrack`.
-        max_corners (int, optional): Maximum number of corners.
-            Used for matching with `cv2.goodFeaturesToTrack`. Defaults to 20000.
-        matching_winsize (int, optional): Size of the search window at each pyramid level.
-            Used by `cv2.calcOpticalFlowPyrLK` call. . Defaults to 25.
-        outliers_filtering (bool, optional): apply outliers filtering. Defaults to False.
+        conf (KLTConfiguration): KLT configuration.
+        p0 (NDArray | None): Optional pre-computed features to track.
+            If None, they will be computed with `cv2.goodFeaturesToTrack`.
 
     Returns:
         tuple[DataFrame, int] | None: data frame of x, y, dx, dy, score
     """
     logger.info("Start tracking")
-    # compute the initial point set
-    # goodFeaturesToTrack input parameters
-    feature_params = {
-        "maxCorners": conf.maxCorners,
-        "qualityLevel": conf.qualityLevel,
-        "minDistance": conf.minDistance,
-        "blockSize": conf.blocksize,
-    }
 
-    # goodFeaturesToTrack corner extraction-ShiThomasi Feature Detector
-    p0 = cv2.goodFeaturesToTrack(ref_data, mask=mask, **feature_params)
+    if p0 is None:
+        # compute the initial point set
+        # goodFeaturesToTrack input parameters
+        feature_params = {
+            "maxCorners": conf.maxCorners,
+            "qualityLevel": conf.qualityLevel,
+            "minDistance": conf.minDistance,
+            "blockSize": conf.blocksize,
+        }
+
+        # goodFeaturesToTrack corner extraction-ShiThomasi Feature Detector
+        p0 = cv2.goodFeaturesToTrack(ref_data, mask=mask, **feature_params)
+
     if p0 is None:
         logger.info("No features extracted")
         return None
@@ -172,6 +192,7 @@ class KLT:
         self._conf: KLTConfiguration = conf
         self._gen_laplacian = gen_laplacian
         self._out_dir = out_dir
+        self._auto_selected_ksizes: list[tuple[int, int]] = []
 
     def match(
         self,
@@ -252,31 +273,55 @@ class KLT:
         logger.info("Nb valid pixels: %s/%s", valid_pixels, x_size * y_size)
 
         # laplacian
-        img_box = cv2.Laplacian(img_box, cv2.CV_8U, ksize=self._conf.laplacian_kernel_size)
-        ref_box = cv2.Laplacian(ref_box, cv2.CV_8U, ksize=self._conf.laplacian_kernel_size)
+        ksize = self._conf.laplacian_kernel_size
+        if ksize == "auto":
+            results, _, best_ksize = self._match_tile_auto_ksize(img_box, ref_box, mask_box)
+            if best_ksize is not None:
+                self._auto_selected_ksizes.append(best_ksize)
+            if self._gen_laplacian and best_ksize is not None:
+                mon_ksize, ref_ksize = best_ksize
+                io.imsave(
+                    os.path.join(
+                        self._out_dir,
+                        f"mon_laplacian_k{mon_ksize}_{x_off}_{y_off}_{x_size}_{y_size}.tif",
+                    ),
+                    cv2.Laplacian(_to_uint8(img_box), cv2.CV_8U, ksize=mon_ksize),
+                )
+                io.imsave(
+                    os.path.join(
+                        self._out_dir,
+                        f"ref_laplacian_k{ref_ksize}_{x_off}_{y_off}_{x_size}_{y_size}.tif",
+                    ),
+                    cv2.Laplacian(_to_uint8(ref_box), cv2.CV_8U, ksize=ref_ksize),
+                )
+        else:
+            mon_ksize = ksize.get("mon", ksize.get("ref", 1)) if isinstance(ksize, dict) else ksize
+            ref_ksize = ksize.get("ref", ksize.get("mon", 1)) if isinstance(ksize, dict) else ksize
+            img_box = cv2.Laplacian(_to_uint8(img_box), cv2.CV_8U, ksize=mon_ksize)
+            ref_box = cv2.Laplacian(_to_uint8(ref_box), cv2.CV_8U, ksize=ref_ksize)
 
-        if self._gen_laplacian:
-            io.imsave(
-                os.path.join(
-                    self._out_dir,
-                    f"mon_laplacian_{x_off}_{y_off}_{x_size}_{y_size}.tif",
-                ),
-                img_box,
-            )
-            io.imsave(
-                os.path.join(
-                    self._out_dir,
-                    f"ref_laplacian_{x_off}_{y_off}_{x_size}_{y_size}.tif",
-                ),
+            if self._gen_laplacian:
+                io.imsave(
+                    os.path.join(
+                        self._out_dir,
+                        f"mon_laplacian_k{mon_ksize}_{x_off}_{y_off}_{x_size}_{y_size}.tif",
+                    ),
+                    img_box,
+                )
+                io.imsave(
+                    os.path.join(
+                        self._out_dir,
+                        f"ref_laplacian_k{ref_ksize}_{x_off}_{y_off}_{x_size}_{y_size}.tif",
+                    ),
+                    ref_box,
+                )
+
+            results = klt_tracker(
                 ref_box,
+                img_box,
+                mask_box,
+                self._conf,
             )
-
-        results = klt_tracker(
-            ref_box,
-            img_box,
-            mask_box,
-            self._conf,
-        )
 
         # clean large dataset
         ref_box = None
@@ -304,3 +349,97 @@ class KLT:
 
         points.sort_values(by=["x0", "y0"], inplace=True)
         return points
+
+    @property
+    def auto_selected_ksize(self) -> tuple[int, int] | None:
+        """Return the most-common (mon_ksize, ref_ksize) pair chosen across all auto-mode tiles."""
+        if not self._auto_selected_ksizes:
+            return None
+        return Counter(self._auto_selected_ksizes).most_common(1)[0][0]
+
+    def _apply_laplacian_and_track(self, img_box, ref_box, mask_box, mon_ksize, ref_ksize):
+        lap_img = cv2.Laplacian(_to_uint8(img_box), cv2.CV_8U, ksize=mon_ksize)
+        lap_ref = cv2.Laplacian(_to_uint8(ref_box), cv2.CV_8U, ksize=ref_ksize)
+        return klt_tracker(lap_ref, lap_img, mask_box, self._conf)
+
+    def _match_tile_auto_ksize(self, img_box, ref_box, mask_box):
+        """Try all (mon_ksize, ref_ksize) combinations and return the result with the highest inlier ratio.
+
+        Returns:
+            tuple[tuple[DataFrame, int] | None, dict[tuple[int, int], float]]: best klt_tracker
+                result and scores dict mapping each (mon_ksize, ref_ksize) pair to its inlier ratio.
+        """
+        combinations = list(itertools.product(LAPLACIAN_AUTO_CANDIDATES, repeat=2))
+
+        # Pre-compute uint8 conversions once
+        img_uint8 = _to_uint8(img_box)
+        ref_uint8 = _to_uint8(ref_box)
+
+        # Pre-compute Laplacians for each candidate kernel size
+        mon_laplacians = {
+            k: cv2.Laplacian(img_uint8, cv2.CV_8U, ksize=k) for k in LAPLACIAN_AUTO_CANDIDATES
+        }
+        ref_laplacians = {
+            k: cv2.Laplacian(ref_uint8, cv2.CV_8U, ksize=k) for k in LAPLACIAN_AUTO_CANDIDATES
+        }
+
+        # Pre-compute features to track for each reference Laplacian
+        feature_params = {
+            "maxCorners": self._conf.maxCorners,
+            "qualityLevel": self._conf.qualityLevel,
+            "minDistance": self._conf.minDistance,
+            "blockSize": self._conf.blocksize,
+        }
+        ref_p0s = {
+            k: cv2.goodFeaturesToTrack(lap, mask=mask_box, **feature_params)
+            for k, lap in ref_laplacians.items()
+        }
+
+        def _run(mon_ksize, ref_ksize):
+            logger.info("Auto laplacian: trying mon_ksize=%s ref_ksize=%s", mon_ksize, ref_ksize)
+
+            p0 = ref_p0s[ref_ksize]
+            if p0 is None:
+                logger.info(
+                    "Auto laplacian: ref_ksize=%s -> no features extracted",
+                    ref_ksize,
+                )
+                return (mon_ksize, ref_ksize), 0.0, None
+
+            result = klt_tracker(
+                ref_laplacians[ref_ksize],
+                mon_laplacians[mon_ksize],
+                mask_box,
+                self._conf,
+                p0=p0,
+            )
+
+            if result is None:
+                logger.info("Auto laplacian: mon_ksize=%s ref_ksize=%s -> no result", mon_ksize, ref_ksize)
+                return (mon_ksize, ref_ksize), 0.0, None
+            points, ninit = result
+            ratio = len(points) / ninit if ninit > 0 else 0.0
+            logger.info("Auto laplacian: mon_ksize=%s ref_ksize=%s -> inlier ratio=%.3f (%d/%d)",
+                        mon_ksize, ref_ksize, ratio, len(points), ninit)
+            return (mon_ksize, ref_ksize), ratio, result
+
+        with ThreadPoolExecutor() as executor:
+            run_results = executor.map(lambda args: _run(*args), combinations)
+
+        scores: dict[tuple[int, int], float] = {}
+        best_result = None
+        best_ratio = -1.0
+        best_ksize = None
+
+        for pair, ratio, result in run_results:
+            scores[pair] = ratio
+            if result is not None and ratio > best_ratio:
+                best_ratio = ratio
+                best_result = result
+                best_ksize = pair
+
+        logger.info("Auto laplacian selected: mon_ksize=%s ref_ksize=%s (inlier ratio=%.3f)",
+                    best_ksize[0] if best_ksize else None,
+                    best_ksize[1] if best_ksize else None,
+                    best_ratio)
+        return best_result, scores, best_ksize

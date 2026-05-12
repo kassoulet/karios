@@ -156,28 +156,6 @@ CSS_STYLES = """
         .nav a:hover {
             background: #34495e;
         }
-        .tab-buttons {
-            display: flex;
-            border-bottom: 2px solid #2c3e50;
-            margin-bottom: 20px;
-        }
-        .tab-btn {
-            padding: 10px 24px;
-            border: none;
-            background: none;
-            cursor: pointer;
-            font-size: 1em;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -2px;
-            color: #555;
-        }
-        .tab-btn.active {
-            border-bottom-color: #3498db;
-            color: #3498db;
-            font-weight: bold;
-        }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
         .chips-grid {
             display: flex;
             flex-wrap: wrap;
@@ -189,27 +167,68 @@ CSS_STYLES = """
             border-radius: 6px;
             padding: 8px;
             background: #fafafa;
-            text-align: center;
         }
         .chip-label {
             font-size: 0.72em;
             color: #888;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
+            font-weight: bold;
         }
-        .chip-images { display: flex; gap: 6px; }
-        .chip-item { text-align: center; }
-        .chip-sublabel {
+        .chip-info {
             font-size: 0.7em;
+            color: #666;
+            margin-bottom: 6px;
+            display: flex;
+            gap: 10px;
+        }
+        .chip-info-label { color: #aaa; }
+        .chip-info-value { font-weight: bold; color: #333; }
+        .chip-row {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+        .chip-col { text-align: center; }
+        .chip-sublabel {
+            font-size: 0.65em;
             color: #aaa;
             margin-bottom: 2px;
         }
-        .chip-item img {
+        .chip-img-wrap {
+            position: relative;
+            display: inline-block;
+            line-height: 0;
+        }
+        .chip-img-wrap img {
             width: 114px;
             height: 114px;
             image-rendering: pixelated;
             display: block;
             border: 1px solid #ccc;
         }
+        .sort-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .sort-bar-label {
+            font-size: 0.85em;
+            color: #666;
+            font-weight: bold;
+        }
+        .sort-btn {
+            padding: 4px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #f8f9fa;
+            cursor: pointer;
+            font-size: 0.82em;
+            color: #444;
+        }
+        .sort-btn:hover { background: #e2e6ea; }
+        .sort-btn.active { background: #2c3e50; color: white; border-color: #2c3e50; }
 """
 
 HTML_TEMPLATE = """<!DOCTYPE html>
@@ -405,17 +424,53 @@ CHIPS_TEMPLATE = """<!DOCTYPE html>
             <a href="https://github.com/telespazio-tim/karios" target="_blank">GitHub Repository</a>
         </div>
     </div>
-    <script>
-        function showTab(tabId) {{
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            document.querySelector('[data-tab="' + tabId + '"]').classList.add('active');
-        }}
-    </script>
 </body>
 </html>
 """
+
+
+_SORT_BAR_HTML = (
+    '<div class="sort-bar">'
+    '<span class="sort-bar-label">Sort by:</span>'
+    '<button class="sort-btn active" data-key="idx" data-label="Chip #">Chip # ↑</button>'
+    '<button class="sort-btn" data-key="dist" data-label="Distance">Distance</button>'
+    '<button class="sort-btn" data-key="score" data-label="ZNCC">ZNCC</button>'
+    '<button class="sort-btn" data-key="nmi" data-label="NMI">NMI</button>'
+    "</div>"
+)
+
+_SORT_SCRIPT = """<script>
+(function () {
+    var key = 'idx', dir = 1;
+    function updateBtns() {
+        document.querySelectorAll('.sort-btn').forEach(function (b) {
+            var active = b.dataset.key === key;
+            b.classList.toggle('active', active);
+            b.textContent = b.dataset.label + (active ? (dir === 1 ? ' ↑' : ' ↓') : '');
+        });
+    }
+    function sort() {
+        var grid = document.querySelector('.chips-grid');
+        var items = Array.from(grid.children);
+        items.sort(function (a, b) {
+            var av = parseFloat(a.dataset[key]);
+            var bv = parseFloat(b.dataset[key]);
+            if (isNaN(av) && isNaN(bv)) return 0;
+            if (isNaN(av)) return 1;
+            if (isNaN(bv)) return -1;
+            return dir * (av - bv);
+        });
+        items.forEach(function (el) { grid.appendChild(el); });
+    }
+    document.querySelectorAll('.sort-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (this.dataset.key === key) { dir *= -1; } else { key = this.dataset.key; dir = 1; }
+            updateBtns();
+            sort();
+        });
+    });
+}());
+</script>"""
 
 
 class HtmlReportGenerator:
@@ -437,37 +492,172 @@ class HtmlReportGenerator:
         self.runtime_config = runtime_config
         self.dem_file_path = dem_file_path
 
-    def _build_chip_pairs_html(self, chips_dir_name: str, ref_name: str, mon_name: str) -> str:
-        """Scan a chips directory and build an HTML grid of REF+MON chip pairs."""
-        ref_dir = self.output_dir / chips_dir_name / ref_name
-        mon_dir = self.output_dir / chips_dir_name / mon_name
+    def _load_chips_data(self) -> dict:
+        """Load chips/chips.csv and return a dict keyed by (x0, y0) int tuples."""
+        import pandas as pd
 
-        if not ref_dir.exists():
+        csv_path = self.output_dir / "chips" / "chips.csv"
+        if not csv_path.exists():
+            return {}
+        try:
+            df = pd.read_csv(csv_path, sep=";")
+            result = {}
+            for _, row in df.iterrows():
+                key = (int(row["x0"]), int(row["y0"]))
+                result[key] = row
+            return result
+        except Exception as exc:
+            logger.warning("Could not load chips.csv: %s", exc)
+            return {}
+
+    def _make_crosshair_svg(self, cx: float, cy: float, size: int = 114) -> str:
+        """Generate an SVG crosshair at (cx, cy) overlaid on a chip image."""
+        outline = "rgba(0,0,0,0)"
+        color = "rgba(255,60,60,0)"
+        s = size
+        lines = (
+            f'<line x1="{cx:.1f}" y1="0" x2="{cx:.1f}" y2="{s}" stroke="{outline}" stroke-width="2.5"/>'
+            f'<line x1="0" y1="{cy:.1f}" x2="{s}" y2="{cy:.1f}" stroke="{outline}" stroke-width="2.5"/>'
+            f'<line x1="{cx:.1f}" y1="0" x2="{cx:.1f}" y2="{s}" stroke="{color}" stroke-width="1"/>'
+            f'<line x1="0" y1="{cy:.1f}" x2="{s}" y2="{cy:.1f}" stroke="{color}" stroke-width="1"/>'
+        )
+        return (
+            f'<svg xmlns="http://www.w3.org/2000/svg" width="{s}" height="{s}" '
+            f'style="position:absolute;top:0;left:0;pointer-events:none;">{lines}</svg>'
+        )
+
+    def _build_combined_chips_html(self, ref_name: str, mon_name: str) -> str:
+        """Build chip grid: each card shows raw + laplacian rows with crosshairs and stats."""
+        import math
+
+        ref_raw_dir = self.output_dir / "chips" / ref_name
+        if not ref_raw_dir.exists():
             return "<p>No chips found.</p>"
 
-        ref_pngs = sorted(ref_dir.glob("REF_*.png"))
+        ref_pngs = sorted(ref_raw_dir.glob("REF_*.png"))
         if not ref_pngs:
             return "<p>No chip images found.</p>"
 
+        chips_data = self._load_chips_data()
+        has_laplacian = (self.output_dir / "chips_laplacian").exists()
+
+        CHIP_DISPLAY = 114
+        CHIP_SIZE = 57
+        SCALE = CHIP_DISPLAY / CHIP_SIZE  # 2.0
+
+        def img_col(src: str | None, sublabel: str, ch_svg: str) -> str:
+            if src:
+                return (
+                    f'<div class="chip-col">'
+                    f'<div class="chip-sublabel">{sublabel}</div>'
+                    f'<div class="chip-img-wrap"><img src="{src}" alt="{sublabel}">{ch_svg}</div>'
+                    f"</div>"
+                )
+            return (
+                f'<div class="chip-col">'
+                f'<div class="chip-sublabel">{sublabel}</div>'
+                f'<div style="width:114px;height:114px;border:1px solid #eee;display:inline-block;background:#f0f0f0;"></div>'
+                f"</div>"
+            )
+
         items = []
-        for ref_png in ref_pngs:
+        for i, ref_png in enumerate(ref_pngs):
             parts = ref_png.stem.split("_")
             if len(parts) < 3:
                 continue
-            x0, y0 = parts[1], parts[2]
-            mon_png = mon_dir / f"MON_{x0}_{y0}.png"
-            ref_src = f"{chips_dir_name}/{ref_name}/{ref_png.name}"
-            mon_src = f"{chips_dir_name}/{mon_name}/{mon_png.name}" if mon_png.exists() else None
-            mon_img = f'<img src="{mon_src}" alt="MON {x0} {y0}">' if mon_src else "<span>N/A</span>"
-            items.append(f"""<div class="chip-pair">
-                <div class="chip-label">({x0}, {y0})</div>
-                <div class="chip-images">
-                    <div class="chip-item"><div class="chip-sublabel">Ref</div><img src="{ref_src}" alt="REF {x0} {y0}"></div>
-                    <div class="chip-item"><div class="chip-sublabel">Mon</div>{mon_img}</div>
-                </div>
-            </div>""")
+            x0, y0 = int(parts[1]), int(parts[2])
 
-        return f'<div class="chips-grid">{"".join(items)}</div>'
+            chip_data = chips_data.get((x0, y0))
+            dx = float(chip_data["dx"]) if chip_data is not None else 0.0
+            dy = float(chip_data["dy"]) if chip_data is not None else 0.0
+            zncc_raw = chip_data.get("zncc_score") if chip_data is not None else None
+            try:
+                zncc = float(zncc_raw)
+                zncc_str = f"{zncc:.3f}" if not math.isnan(zncc) else "N/A"
+                score_val = "nan" if math.isnan(zncc) else f"{zncc:.6f}"
+            except (TypeError, ValueError):
+                zncc_str = "N/A"
+                score_val = "nan"
+
+            mi_raw = chip_data.get("mi_score") if chip_data is not None else None
+            try:
+                mi = float(mi_raw)
+                mi_str = f"{mi:.3f}" if not math.isnan(mi) else "N/A"
+                mi_val = "nan" if math.isnan(mi) else f"{mi:.6f}"
+            except (TypeError, ValueError):
+                mi_str = "N/A"
+                mi_val = "nan"
+
+            dist = dx**2 + dy**2
+
+            # Crosshair positions in display coords
+            ref_cx = CHIP_SIZE / 2 * SCALE  # 57.0
+            ref_cy = CHIP_SIZE / 2 * SCALE  # 57.0
+            mon_cx = max(2.0, min(CHIP_DISPLAY - 2.0, ref_cx - dx * SCALE))
+            mon_cy = max(2.0, min(CHIP_DISPLAY - 2.0, ref_cy - dy * SCALE))
+
+            ref_ch = self._make_crosshair_svg(ref_cx, ref_cy, CHIP_DISPLAY)
+            mon_ch = self._make_crosshair_svg(mon_cx, mon_cy, CHIP_DISPLAY)
+
+            ref_raw_src = f"chips/{ref_name}/{ref_png.name}"
+            mon_raw_path = self.output_dir / "chips" / mon_name / f"MON_{x0}_{y0}.png"
+            mon_raw_src = (
+                f"chips/{mon_name}/MON_{x0}_{y0}.png" if mon_raw_path.exists() else None
+            )
+
+            raw_row = (
+                f'<div class="chip-row">'
+                f"{img_col(ref_raw_src, 'Ref', ref_ch)}"
+                f"{img_col(mon_raw_src, 'Mon', mon_ch)}"
+                f"</div>"
+            )
+
+            lap_row = ""
+            if has_laplacian:
+                ref_lap_path = (
+                    self.output_dir
+                    / "chips_laplacian"
+                    / ref_name
+                    / f"REF_{x0}_{y0}.png"
+                )
+                mon_lap_path = (
+                    self.output_dir
+                    / "chips_laplacian"
+                    / mon_name
+                    / f"MON_{x0}_{y0}.png"
+                )
+                ref_lap_src = (
+                    f"chips_laplacian/{ref_name}/REF_{x0}_{y0}.png"
+                    if ref_lap_path.exists()
+                    else None
+                )
+                mon_lap_src = (
+                    f"chips_laplacian/{mon_name}/MON_{x0}_{y0}.png"
+                    if mon_lap_path.exists()
+                    else None
+                )
+                lap_row = (
+                    f'<div class="chip-row">'
+                    f"{img_col(ref_lap_src, 'Ref Laplacian', ref_ch)}"
+                    f"{img_col(mon_lap_src, 'Mon Laplacian', mon_ch)}"
+                    f"</div>"
+                )
+
+            items.append(
+                f'<div class="chip-pair" data-idx="{i}" data-dist="{dist:.4f}" data-score="{score_val}" data-nmi="{mi_val}">'
+                f'<div class="chip-label">#{i} ({x0}, {y0})</div>'
+                f"{raw_row}{lap_row}"
+                f'<div class="chip-info">'
+                f'<span><span class="chip-info-label">dx</span> <span class="chip-info-value">{dx:+.2f}</span></span>'
+                f'<span><span class="chip-info-label">dy</span> <span class="chip-info-value">{dy:+.2f}</span></span>'
+                f'<span><span class="chip-info-label">zncc</span> <span class="chip-info-value">{zncc_str}</span></span>'
+                f'<span><span class="chip-info-label">nmi</span> <span class="chip-info-value">{mi_str}</span></span>'
+                f"</div>"
+                f"</div>"
+            )
+
+        grid = f'<div class="chips-grid">{"".join(items)}</div>'
+        return _SORT_BAR_HTML + grid + _SORT_SCRIPT
 
     def _copy_assets(self):
         """Copy required assets to output directory."""
@@ -503,7 +693,10 @@ class HtmlReportGenerator:
             for plot_path in self.report_paths.dem_plots:
                 relative_path = Path(plot_path).name
                 title = (
-                    relative_path.replace("dem_", "").replace(".png", "").replace("_", " ").title()
+                    relative_path.replace("dem_", "")
+                    .replace(".png", "")
+                    .replace("_", " ")
+                    .title()
                 )
                 dem_plots_html += f"""
                 <div class="image-container">
@@ -524,7 +717,9 @@ class HtmlReportGenerator:
             dem_file=html.escape(self.dem_file_path.name) if self.dem_file_path else "None",
             pixel_size=self.runtime_config.pixel_size if self.runtime_config.pixel_size else "Auto",
             large_shift_detection=(
-                "Enabled" if self.runtime_config.enable_large_shift_detection else "Disabled"
+                "Enabled"
+                if self.runtime_config.enable_large_shift_detection
+                else "Disabled"
             ),
             title_prefix=html.escape(self.runtime_config.title_prefix) if self.runtime_config.title_prefix else "None",
             matched_points=len(self.match_result.points),
@@ -554,10 +749,14 @@ class HtmlReportGenerator:
             for p in self.report_paths.products:
                 p_path = Path(p)
                 p_name = p_path.name
-                p_type = "Vector (GeoJSON)" if p_name.endswith(".json") else "Raster (GeoTIFF)"
+                p_type = (
+                    "Vector (GeoJSON)"
+                    if p_name.endswith(".json")
+                    else "Raster (GeoTIFF)"
+                )
                 if "mask" in p_name:
                     p_type = "Mask (GeoTIFF)"
-                
+
                 products_rows += f"""
                 <tr>
                     <td>{p_type}</td>
@@ -584,23 +783,8 @@ class HtmlReportGenerator:
             chips_vrt_links = f'<li><a href="{mon_vrt}">Monitored Chips VRT</a></li>'
             chips_vrt_links += f'<li><a href="{ref_vrt}">Reference Chips VRT</a></li>'
 
-            raw_pairs = self._build_chip_pairs_html("chips", ref_name, mon_name)
-            lap_dir = self.output_dir / "chips_laplacian"
-            has_laplacian = lap_dir.exists() and any(lap_dir.rglob("*.png"))
-
-            if has_laplacian:
-                lap_pairs = self._build_chip_pairs_html("chips_laplacian", ref_name, mon_name)
-                chips_section_html = f"""
-    <div class="section">
-        <div class="tab-buttons">
-            <button class="tab-btn active" data-tab="tab-raw" onclick="showTab('tab-raw')">Raw</button>
-            <button class="tab-btn" data-tab="tab-laplacian" onclick="showTab('tab-laplacian')">Laplacian</button>
-        </div>
-        <div id="tab-raw" class="tab-content active">{raw_pairs}</div>
-        <div id="tab-laplacian" class="tab-content">{lap_pairs}</div>
-    </div>"""
-            else:
-                chips_section_html = f'<div class="section"><h2>Chips</h2>{raw_pairs}</div>'
+            chips_grid = self._build_combined_chips_html(ref_name, mon_name)
+            chips_section_html = f'<div class="section">{chips_grid}</div>'
 
             chips_content = CHIPS_TEMPLATE.format(
                 css_styles=CSS_STYLES,

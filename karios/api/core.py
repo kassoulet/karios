@@ -447,13 +447,15 @@ class KariosAPI:
             reference_image (GdalRasterImage): reference image to check
         """
 
-        min_max = np.nanpercentile(monitored_image.array, [2, 98])
-        if min_max[1] - min_max[0] <= 10:
-            logger.warning("Low dynamic range detected for monitored, you could get poor results")
+        min_max_mon = np.nanpercentile(monitored_image.array, [2, 98])
+        if np.iterable(min_max_mon) and len(min_max_mon) >= 2:
+            if min_max_mon[1] - min_max_mon[0] <= 10:
+                logger.warning("Low dynamic range detected for monitored, you could get poor results")
 
-        min_max = np.nanpercentile(reference_image.array, [2, 98])
-        if min_max[1] - min_max[0] <= 10:
-            logger.warning("Low dynamic range detected for reference, you could get poor results")
+        min_max_ref = np.nanpercentile(reference_image.array, [2, 98])
+        if np.iterable(min_max_ref) and len(min_max_ref) >= 2:
+            if min_max_ref[1] - min_max_ref[0] <= 10:
+                logger.warning("Low dynamic range detected for reference, you could get poor results")
 
     def _load_images(
         self, ref_file_path: Path, mon_file_path: Path

@@ -555,7 +555,7 @@ class HtmlReportGenerator:
                 )
             return (
                 f'<div class="chip-col">'
-                f'<div class="chip-sublabel">{sublabel}</div>'
+                f'<div class="chip-sublabel">{html.escape(sublabel)}</div>'
                 f'<div style="width:114px;height:114px;border:1px solid #eee;display:inline-block;background:#f0f0f0;"></div>'
                 f"</div>"
             )
@@ -736,10 +736,10 @@ class HtmlReportGenerator:
             std_y=f"{self.accuracy_analysis.std_y:.3f}",
             ce90=f"{self.accuracy_analysis.ce90:.3f}",
             ce95=f"{self.accuracy_analysis.ce95:.3f}",
-            overview_plot=Path(self.report_paths.overview_plot).name,
-            dx_plot=Path(self.report_paths.dx_plot).name,
-            dy_plot=Path(self.report_paths.dy_plot).name,
-            ce_plot=Path(self.report_paths.ce_plot).name,
+            overview_plot=html.escape(Path(self.report_paths.overview_plot).name),
+            dx_plot=html.escape(Path(self.report_paths.dx_plot).name),
+            dy_plot=html.escape(Path(self.report_paths.dy_plot).name),
+            ce_plot=html.escape(Path(self.report_paths.ce_plot).name),
             dem_plots_html=dem_plots_html,
         )
 

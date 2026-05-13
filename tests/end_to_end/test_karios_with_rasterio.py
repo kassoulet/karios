@@ -66,8 +66,12 @@ import unittest
 from pathlib import Path
 
 import numpy as np
-import rasterio
-from rasterio.transform import from_origin
+try:
+    import rasterio
+    from rasterio.transform import from_origin
+    HAS_RASTERIO = True
+except ImportError:
+    HAS_RASTERIO = False
 
 from karios.api import KariosAPI, RuntimeConfiguration
 from karios.core.configuration import ProcessingConfiguration
@@ -76,6 +80,7 @@ module_dir_path = os.path.dirname(__file__)
 test_data_dir = os.path.join(module_dir_path, "test_data")
 
 
+@unittest.skipIf(not HAS_RASTERIO, "rasterio not installed")
 class TestKariosWithRasterio(unittest.TestCase):
     """End-to-end test demonstrating how to use karios as a library with rasterio"""
 

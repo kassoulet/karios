@@ -18,6 +18,7 @@
 """Module to generate HTML reports for KARIOS results."""
 
 import datetime
+import html
 import logging
 import shutil
 from pathlib import Path
@@ -548,8 +549,8 @@ class HtmlReportGenerator:
             if src:
                 return (
                     f'<div class="chip-col">'
-                    f'<div class="chip-sublabel">{sublabel}</div>'
-                    f'<div class="chip-img-wrap"><img src="{src}" alt="{sublabel}">{ch_svg}</div>'
+                    f'<div class="chip-sublabel">{html.escape(sublabel)}</div>'
+                    f'<div class="chip-img-wrap"><img src="{html.escape(src)}" alt="{html.escape(sublabel)}">{ch_svg}</div>'
                     f"</div>"
                 )
             return (
@@ -699,8 +700,8 @@ class HtmlReportGenerator:
                 )
                 dem_plots_html += f"""
                 <div class="image-container">
-                    <span class="image-title">DEM - {title}</span>
-                    <img src="{relative_path}" alt="{title} Plot">
+                    <span class="image-title">DEM - {html.escape(title)}</span>
+                    <img src="{html.escape(str(relative_path))}" alt="{html.escape(title)} Plot">
                 </div>"""
             dem_plots_html += "</div>"
 
@@ -710,12 +711,12 @@ class HtmlReportGenerator:
             products_link=products_link,
             chips_link=chips_link,
             generation_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            monitored_image=self.match_result.monitored_image.file_name,
-            reference_image=self.match_result.reference_image.file_name,
-            mask_file=self.match_result.mask.file_name
+            monitored_image=html.escape(self.match_result.monitored_image.file_name),
+            reference_image=html.escape(self.match_result.reference_image.file_name),
+            mask_file=html.escape(self.match_result.mask.file_name)
             if self.match_result.mask
             else "None",
-            dem_file=self.dem_file_path.name if self.dem_file_path else "None",
+            dem_file=html.escape(self.dem_file_path.name) if self.dem_file_path else "None",
             pixel_size=self.runtime_config.pixel_size
             if self.runtime_config.pixel_size
             else "Auto",
@@ -724,7 +725,7 @@ class HtmlReportGenerator:
                 if self.runtime_config.enable_large_shift_detection
                 else "Disabled"
             ),
-            title_prefix=self.runtime_config.title_prefix or "None",
+            title_prefix=html.escape(self.runtime_config.title_prefix or "None"),
             matched_points=len(self.match_result.points),
             valid_pixels=self.accuracy_analysis.valid_pixels,
             total_pixels=self.accuracy_analysis.total_pixels,
@@ -762,14 +763,14 @@ class HtmlReportGenerator:
 
                 products_rows += f"""
                 <tr>
-                    <td>{p_type}</td>
-                    <td>{p_name}</td>
-                    <td><a href="{p_name}" download>Download</a></td>
+                    <td>{html.escape(p_type)}</td>
+                    <td>{html.escape(p_name)}</td>
+                    <td><a href="{html.escape(p_name)}" download>Download</a></td>
                 </tr>"""
 
             products_content = PRODUCTS_TEMPLATE.format(
                 css_styles=CSS_STYLES,
-                title_prefix=self.runtime_config.title_prefix or "KARIOS",
+                title_prefix=html.escape(self.runtime_config.title_prefix or "KARIOS"),
                 chips_link=chips_link,
                 products_rows=products_rows,
             )
@@ -783,15 +784,15 @@ class HtmlReportGenerator:
 
             mon_vrt = f"chips/{mon_name}/monitored_chips.vrt"
             ref_vrt = f"chips/{ref_name}/reference_chips.vrt"
-            chips_vrt_links = f'<li><a href="{mon_vrt}">Monitored Chips VRT</a></li>'
-            chips_vrt_links += f'<li><a href="{ref_vrt}">Reference Chips VRT</a></li>'
+            chips_vrt_links = f'<li><a href="{html.escape(mon_vrt)}">Monitored Chips VRT</a></li>'
+            chips_vrt_links += f'<li><a href="{html.escape(ref_vrt)}">Reference Chips VRT</a></li>'
 
             chips_grid = self._build_combined_chips_html(ref_name, mon_name)
             chips_section_html = f'<div class="section">{chips_grid}</div>'
 
             chips_content = CHIPS_TEMPLATE.format(
                 css_styles=CSS_STYLES,
-                title_prefix=self.runtime_config.title_prefix or "KARIOS",
+                title_prefix=html.escape(self.runtime_config.title_prefix or "KARIOS"),
                 products_link=products_link,
                 chips_vrt_links=chips_vrt_links,
                 chips_section_html=chips_section_html,

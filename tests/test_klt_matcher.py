@@ -489,7 +489,16 @@ def test_match_tile_auto_ksize_selects_best_inlier_ratio():
         # We've mocked cv2.goodFeaturesToTrack to return a MagicMock for p0.
         # We can use the mock's 'idx' attribute to identify which ksize was used.
         p0_idx = getattr(p0, "idx", -1)
-        count = best_count if p0_idx == 2 else 1
+        # Identify which mon_ksize was used by checking the laplacian (image_data)
+        mon_idx = getattr(image_data, "ksize_idx", -1)
+
+        # Only the specific combination (best_mon, best_ref) gives the best count
+        if p0_idx == LAPLACIAN_AUTO_CANDIDATES.index(best_ref) and \
+           mon_idx == LAPLACIAN_AUTO_CANDIDATES.index(best_mon):
+            count = best_count
+        else:
+            count = 1
+
         df = pd.DataFrame({"x0": list(range(count)), "y0": list(range(count)),
                            "dx": [0] * count, "dy": [0] * count, "score": [0.9] * count})
         return df, ninit

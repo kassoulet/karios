@@ -1,0 +1,519 @@
+[INFO   ] [2026-05-13 07:53:29] karios.cli.commands - Start KARIOS 2.2.0-dev
+[INFO   ] [2026-05-13 07:53:29] karios.cli.commands - Load config from file /app/tests/end_to_end/processing_configuration.json
+[WARNING] [2026-05-13 07:53:29] karios.api.core - Output dir /app/tests/end_to_end/test_results/L2F_T12SYH_20220824T175017_LS9_R035_B04_10m_T12SYH_20220514T175909_B04 already exists, some files could be overridden.
+[INFO   ] [2026-05-13 07:53:29] karios.api.core - Process /app/tests/end_to_end/test_data/L2F_T12SYH_20220824T175017_LS9_R035_B04_10m.tif
+[ERROR  ] [2026-05-13 07:53:29] karios.cli.commands - Error during processing: invalid index to scalar variable.
+[INFO   ] [2026-05-13 08:22:12] karios.cli.commands - Start KARIOS 2.2.0-dev
+[INFO   ] [2026-05-13 08:22:12] karios.cli.commands - Load config from file /app/tests/end_to_end/processing_configuration.json
+[WARNING] [2026-05-13 08:22:12] karios.api.core - Output dir /app/tests/end_to_end/test_results/L2F_T12SYH_20220824T175017_LS9_R035_B04_10m_T12SYH_20220514T175909_B04 already exists, some files could be overridden.
+[INFO   ] [2026-05-13 08:22:12] karios.api.core - Process /app/tests/end_to_end/test_data/L2F_T12SYH_20220824T175017_LS9_R035_B04_10m.tif
+[ERROR  ] [2026-05-13 08:22:12] karios.cli.commands - Error during processing: invalid index to scalar variable.
+[INFO   ] [2026-05-13 08:30:16] karios.cli.commands - Start KARIOS 2.2.0-dev
+[INFO   ] [2026-05-13 08:30:16] karios.cli.commands - Load config from file /app/tests/end_to_end/processing_configuration.json
+[WARNING] [2026-05-13 08:30:16] karios.api.core - Output dir /app/tests/end_to_end/test_results/L2F_T12SYH_20220824T175017_LS9_R035_B04_10m_T12SYH_20220514T175909_B04 already exists, some files could be overridden.
+[INFO   ] [2026-05-13 08:30:16] karios.api.core - Process /app/tests/end_to_end/test_data/L2F_T12SYH_20220824T175017_LS9_R035_B04_10m.tif
+[INFO   ] [2026-05-13 08:30:16] karios.api.core - No mask provided
+[INFO   ] [2026-05-13 08:30:16] karios.matcher.klt - KLT...
+[INFO   ] [2026-05-13 08:30:16] karios.matcher.klt - <MagicMock name='mock.gdal.Open().RasterXSize' id='139823325090624'> <MagicMock name='mock.gdal.Open().RasterYSize' id='139823325094800'>
+[INFO   ] [2026-05-13 08:30:16] karios.matcher.klt - Tile: 0 0 (<MagicMock name='mock.gdal.Open().RasterXSize' id='139823325090624'> <MagicMock name='mock.gdal.Open().RasterYSize' id='139823325094800'>)
+[ERROR  ] [2026-05-13 08:30:16] karios.cli.commands - Error during processing: '<' not supported between instances of 'int' and 'MagicMock'
+[ERROR  ] [2026-05-13 08:30:16] karios.core.configuration - /non/existent/path.json does not exist.
+[WARNING] [2026-05-13 08:30:17] karios.matcher.zncc_service - One or both patches have zero standard deviation, returning NaN for ZNCC
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - Compute ZNCC for 0 points
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - ZNCC computation finish
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - Compute ZNCC for 1 points
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - ZNCC computation finish
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - Compute ZNCC for 4 points
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - ZNCC computation finish
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Start tracking
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - No features extracted
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Start tracking
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tracking finished
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - KLT...
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - 5 5
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 0 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 1 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 2 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 3 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 4 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 1 0 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 1 1 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 1 2 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 1 3 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 1 4 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 2 0 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 2 1 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 2 2 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 2 3 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 2 4 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 3 0 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 3 1 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 3 2 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 3 3 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 3 4 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 4 0 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 4 1 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 4 2 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 4 3 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 4 4 (5 5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 25/1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 1 / 1
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: nan / nan
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Start tracking
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - No features extracted
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - Compute ZNCC for 2 points
+[WARNING] [2026-05-13 08:30:17] karios.matcher.zncc_service - Point to close to image top or left boundaries, skip it
+[WARNING] [2026-05-13 08:30:17] karios.matcher.zncc_service - Point to close to image bottom or right boundaries, skip it
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - ZNCC computation finish
+[WARNING] [2026-05-13 08:30:17] karios.matcher.zncc_service - One or both patches have zero standard deviation, returning NaN for ZNCC
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - Compute ZNCC for 2 points
+[INFO   ] [2026-05-13 08:30:17] karios.core.image - Monitored image pixel size: 10.0
+[WARNING] [2026-05-13 08:30:17] karios.core.image - User provides pixel resolution but resolution can be read from image to monitor, use input image resolution
+[INFO   ] [2026-05-13 08:30:17] karios.core.image - Monitored image pixel size: 10.0
+[INFO   ] [2026-05-13 08:30:17] karios.core.image - Input image does not have pixel size information, use provided pixel size 15.0
+[WARNING] [2026-05-13 08:30:17] karios.core.image - No pixel resolution provided by user and resolution cannot be read from image to monitor
+[INFO   ] [2026-05-13 08:30:17] karios.report.html_report - Generating HTML report
+[INFO   ] [2026-05-13 08:30:17] karios.report.html_report - HTML report generated at /tmp/pytest-of-jules/pytest-3/test_html_report_escaping0/output/report.html
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Start tracking
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - No features extracted
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Start tracking
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Filter outliers
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tracking finished
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Start tracking
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Filter outliers
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tracking finished
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - KLT...
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - 200 200
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 0 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Read mask at offset x 0, y 0, with tile size 100, 100
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 10000/10000
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 10 / 2
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: 1.4142135623730951 / 1.4142135623730951
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 100 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Read mask at offset x 0, y 100, with tile size 100, 100
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 10000/10000
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 10 / 2
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: 1.4142135623730951 / 1.4142135623730951
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 100 0 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Read mask at offset x 100, y 0, with tile size 100, 100
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 10000/10000
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 10 / 2
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: 1.4142135623730951 / 1.4142135623730951
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 100 100 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Read mask at offset x 100, y 100, with tile size 100, 100
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 10000/10000
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 10 / 2
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: 1.4142135623730951 / 1.4142135623730951
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - KLT...
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - 200 200
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 0 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Read mask at offset x 0, y 0, with tile size 100, 100
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - -- No valid pixels, skipping this tile
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 100 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Read mask at offset x 0, y 100, with tile size 100, 100
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - -- No valid pixels, skipping this tile
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 100 0 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Read mask at offset x 100, y 0, with tile size 100, 100
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - -- No valid pixels, skipping this tile
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 100 100 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Read mask at offset x 100, y 100, with tile size 100, 100
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - -- No valid pixels, skipping this tile
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - KLT...
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - 200 200
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 0 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Read mask at offset x 0, y 0, with tile size 100, 100
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 10000/10000
+[WARNING] [2026-05-13 08:30:17] karios.matcher.klt - No result for tile 0 0 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 100 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Read mask at offset x 0, y 100, with tile size 100, 100
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 10000/10000
+[WARNING] [2026-05-13 08:30:17] karios.matcher.klt - No result for tile 0 100 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 100 0 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Read mask at offset x 100, y 0, with tile size 100, 100
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 10000/10000
+[WARNING] [2026-05-13 08:30:17] karios.matcher.klt - No result for tile 100 0 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 100 100 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Read mask at offset x 100, y 100, with tile size 100, 100
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 10000/10000
+[WARNING] [2026-05-13 08:30:17] karios.matcher.klt - No result for tile 100 100 (200 200)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 0 (100 100)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 2488/2500
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 5 / 2
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: 1.4142135623730951 / 1.4142135623730951
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=3 ref_ksize=3
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=3 ref_ksize=3 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=3 ref_ksize=5
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=3 ref_ksize=5 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=3 ref_ksize=7
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=3 ref_ksize=7 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=3 ref_ksize=9
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=3 ref_ksize=9 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=3 ref_ksize=11
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=3 ref_ksize=11 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=5 ref_ksize=3
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=5 ref_ksize=3 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=5 ref_ksize=5
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=5 ref_ksize=5 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=5 ref_ksize=7
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=5 ref_ksize=7 -> inlier ratio=0.800 (8/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=5 ref_ksize=9
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=5 ref_ksize=9 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=5 ref_ksize=11
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=5 ref_ksize=11 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=7 ref_ksize=3
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=7 ref_ksize=3 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=7 ref_ksize=5
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=7 ref_ksize=5 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=7 ref_ksize=7
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=7 ref_ksize=9
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=7 ref_ksize=7 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=7 ref_ksize=11
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=9 ref_ksize=3
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=7 ref_ksize=9 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=9 ref_ksize=5
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=9 ref_ksize=7
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=7 ref_ksize=11 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=9 ref_ksize=9
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=9 ref_ksize=3 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=9 ref_ksize=11
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=11 ref_ksize=3
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=11 ref_ksize=5
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=9 ref_ksize=5 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=9 ref_ksize=7 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=11 ref_ksize=7
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=9 ref_ksize=9 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=11 ref_ksize=9
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=9 ref_ksize=11 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=11 ref_ksize=3 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=11 ref_ksize=5 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=11 ref_ksize=11
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=11 ref_ksize=7 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=11 ref_ksize=9 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=11 ref_ksize=11 -> inlier ratio=0.100 (1/10)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian selected: mon_ksize=5 ref_ksize=7 (inlier ratio=0.800)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 0 (100 100)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 10000/10000
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=3 ref_ksize=3
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=3 ref_ksize=3 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=3 ref_ksize=5
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=3 ref_ksize=5 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=3 ref_ksize=7
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=3 ref_ksize=9
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=3 ref_ksize=7 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=3 ref_ksize=11
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=5 ref_ksize=3
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=3 ref_ksize=9 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=5 ref_ksize=5
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=5 ref_ksize=7
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=5 ref_ksize=9
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=3 ref_ksize=11 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=5 ref_ksize=11
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=5 ref_ksize=3 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=7 ref_ksize=3
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=5 ref_ksize=5 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=7 ref_ksize=5
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=5 ref_ksize=7 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=5 ref_ksize=9 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=7 ref_ksize=7
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=5 ref_ksize=11 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=7 ref_ksize=9
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=7 ref_ksize=3 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=7 ref_ksize=11
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=7 ref_ksize=5 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=9 ref_ksize=3
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=9 ref_ksize=5
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=7 ref_ksize=7 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=9 ref_ksize=7
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=7 ref_ksize=9 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=9 ref_ksize=9
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=7 ref_ksize=11 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=9 ref_ksize=11
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=9 ref_ksize=3 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=9 ref_ksize=5 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=11 ref_ksize=3
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=9 ref_ksize=7 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=11 ref_ksize=5
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=9 ref_ksize=9 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=11 ref_ksize=7
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=9 ref_ksize=11 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=11 ref_ksize=9
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: trying mon_ksize=11 ref_ksize=11
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=11 ref_ksize=3 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=11 ref_ksize=5 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=11 ref_ksize=7 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=11 ref_ksize=9 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian: mon_ksize=11 ref_ksize=11 -> inlier ratio=0.400 (2/5)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Auto laplacian selected: mon_ksize=3 ref_ksize=3 (inlier ratio=0.400)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - NbPoints(init/final): 5 / 2
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) MEAN: 0.0 / 0.0
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - DX/DY(KLT) STD: 1.4142135623730951 / 1.4142135623730951
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Tile: 0 0 (100 100)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.klt - Nb valid pixels: 10000/10000
+[WARNING] [2026-05-13 08:30:17] karios.matcher.klt - No result for tile 0 0 (100 100)
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.mutual_info_service - Compute mutual information for 2 points
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.mutual_info_service - Mutual information computation finish
+[WARNING] [2026-05-13 08:30:17] karios.matcher.mutual_info_service - Point to close to image top or left boundaries, skip it
+[WARNING] [2026-05-13 08:30:17] karios.matcher.mutual_info_service - Point to close to image bottom or right boundaries, skip it
+[ERROR  ] [2026-05-13 08:30:17] karios.matcher.mutual_info_service - Error while computing mutual information
+Traceback (most recent call last):
+  File "/app/karios/matcher/mutual_info_service.py", line 127, in _compute_mutual_info
+    return _mutual_info(chip_ref, chip_mon)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+Exception: Test error
+Stack (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/config/__init__.py", line 199, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/main.py", line 365, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/main.py", line 318, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/main.py", line 372, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/main.py", line 396, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/runner.py", line 118, in pytest_runtest_protocol
+    runtestprotocol(item, nextitem=nextitem)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/runner.py", line 137, in runtestprotocol
+    reports.append(call_and_report(item, "call", log))
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/runner.py", line 244, in call_and_report
+    call = CallInfo.from_call(
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/runner.py", line 353, in from_call
+    result: TResult | None = func()
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/runner.py", line 245, in <lambda>
+    lambda: runtest_hook(item=item, **kwds),
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/runner.py", line 179, in pytest_runtest_call
+    item.runtest()
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/python.py", line 1720, in runtest
+    self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/python.py", line 166, in pytest_pyfunc_call
+    result = testfunction(**testargs)
+  File "/app/tests/test_mutual_info_service.py", line 169, in test_mutual_info_service_error_handling
+    result = service._compute_mutual_info(series, mock_monitored, mock_reference)
+  File "/app/karios/matcher/mutual_info_service.py", line 129, in _compute_mutual_info
+    logger.error("Error while computing mutual information", exc_info=e, stack_info=True)
+[WARNING] [2026-05-13 08:30:17] karios.matcher.zncc_service - One or both patches have zero standard deviation, returning NaN for ZNCC
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - Compute ZNCC for 2 points
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - ZNCC computation finish
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - Compute ZNCC for 2 points
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - ZNCC computation finish
+[ERROR  ] [2026-05-13 08:30:17] karios.matcher.zncc_service - Error while computing ZNCC
+Traceback (most recent call last):
+  File "/app/karios/matcher/zncc_service.py", line 222, in _compute_zncc
+    return _zncc2(
+           ^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+Exception: Test error
+Stack (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/config/__init__.py", line 199, in main
+    ret: ExitCode | int = config.hook.pytest_cmdline_main(config=config)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/main.py", line 365, in pytest_cmdline_main
+    return wrap_session(config, _main)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/main.py", line 318, in wrap_session
+    session.exitstatus = doit(config, session) or 0
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/main.py", line 372, in _main
+    config.hook.pytest_runtestloop(session=session)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/main.py", line 396, in pytest_runtestloop
+    item.config.hook.pytest_runtest_protocol(item=item, nextitem=nextitem)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/runner.py", line 118, in pytest_runtest_protocol
+    runtestprotocol(item, nextitem=nextitem)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/runner.py", line 137, in runtestprotocol
+    reports.append(call_and_report(item, "call", log))
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/runner.py", line 244, in call_and_report
+    call = CallInfo.from_call(
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/runner.py", line 353, in from_call
+    result: TResult | None = func()
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/runner.py", line 245, in <lambda>
+    lambda: runtest_hook(item=item, **kwds),
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/runner.py", line 179, in pytest_runtest_call
+    item.runtest()
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/python.py", line 1720, in runtest
+    self.ihook.pytest_pyfunc_call(pyfuncitem=self)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_hooks.py", line 512, in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_manager.py", line 120, in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/pluggy/_callers.py", line 121, in _multicall
+    res = hook_impl.function(*args)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/site-packages/_pytest/python.py", line 166, in pytest_pyfunc_call
+    result = testfunction(**testargs)
+  File "/app/tests/test_zncc_service.py", line 253, in test_zncc_service_compute_zncc_error_handling
+    result = service._compute_zncc(series, mock_monitored, mock_reference)
+  File "/app/karios/matcher/zncc_service.py", line 233, in _compute_zncc
+    logger.error(
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - Compute ZNCC for 1 points
+[WARNING] [2026-05-13 08:30:17] karios.matcher.zncc_service - One or both patches have zero standard deviation, returning NaN for ZNCC
+[INFO   ] [2026-05-13 08:30:17] karios.matcher.zncc_service - ZNCC computation finish
+[WARNING] [2026-05-13 08:30:17] karios.matcher.zncc_service - One or both patches have zero standard deviation, returning NaN for ZNCC

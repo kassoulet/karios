@@ -38,7 +38,6 @@ from karios.core.configuration import ProcessingConfiguration
 from karios.core.errors import KariosException
 from karios.core.image import GdalRasterImage, get_image_resolution, shift_image
 from karios.core.utils import get_filename
-from karios.matcher.global_align import apply_global_alignment
 from karios.matcher.klt import KLT
 from karios.matcher.large_offset import LargeOffsetMatcher
 from karios.matcher.mutual_info_service import MutualInfoService
@@ -229,16 +228,6 @@ class KariosAPI:
 
         # Load mask if provided (raster or vector)
         mask = self._load_mask(monitored_image, mask_file_path, vector_mask_path)
-
-        # Optional preprocessing: rotated-template global alignment.
-        if self._runtime_configuration.global_align:
-            logger.info("Global alignment preprocessing enabled")
-            monitored_image, reference_image, mask, _ = apply_global_alignment(
-                monitored_image,
-                reference_image,
-                mask,
-                Path(self._runtime_configuration.output_directory),
-            )
 
         # Handle large offset detection if enabled
         if self._runtime_configuration.enable_large_shift_detection:

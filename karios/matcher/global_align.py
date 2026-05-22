@@ -50,7 +50,7 @@ SIFT_CONTRAST_THRESHOLD = 0.02  # default 0.04; lower → more keypoints in low-
 SIFT_EDGE_THRESHOLD = 10
 LOWE_RATIO = 0.75
 RANSAC_THRESHOLD_PX = 3.0
-MIN_MATCHES = 4  # similarity has 4 DOF; RANSAC needs ≥2 pairs but more = robuster
+MIN_MATCHES = 4  # cv2.findHomography needs ≥4 point pairs; more = robuster
 ECC_MAX_ITERS = 200
 ECC_EPS = 1e-6
 
@@ -111,10 +111,12 @@ def _prior_from_georefs(
     monitored: GdalRasterImage, reference: GdalRasterImage
 ) -> Optional[np.ndarray]:
     """Build the 3x3 homography mon_pixel → ref_pixel implied by the two
-    geotransforms, when both images are georeferenced in the same CRS.
+    geotransforms, assuming both images are georeferenced in the same CRS
+    and north-up (zero skew terms in their geotransforms — true for almost
+    all satellite GeoTIFFs).
 
-    Returns None when no usable prior can be built (missing projection,
-    mismatched CRS, or non-north-up geotransform).
+    Returns None when no usable prior can be built (missing projection or
+    mismatched CRS).
     """
     if not monitored.projection or not reference.projection:
         return None

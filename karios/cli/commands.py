@@ -225,16 +225,6 @@ def cli() -> None:
     is_flag=True,
     help="Enable detection and correction of large pixel shifts",
 )
-@click.option(
-    "--preprocess-global-align",
-    "global_align",
-    is_flag=True,
-    help=(
-        "Preprocess: sweep ±15° rotation via template matching, apply the best "
-        "rotation+translation to the monitored image, and crop both images (and mask) "
-        "to the overlap region before matching."
-    ),
-)
 @click.option("--debug", "-d", is_flag=True, help="Enable Debug mode")
 @click.option("--no-log-file", is_flag=True, help="Do not log in file")
 @click.option(
@@ -261,7 +251,6 @@ def process(
     title_prefix: Optional[str],
     dem_description: Optional[str],
     enable_large_shift_detection: bool,
-    global_align: bool,
     no_log_file: bool,
     debug: bool,
     log_file_path: str,
@@ -325,7 +314,6 @@ def process(
             generate_kp_chips=generate_kp_chips,
             dem_description=dem_description,
             enable_large_shift_detection=enable_large_shift_detection,
-            global_align=global_align,
             no_values=list(no_value) if no_value else None,
         )
 
@@ -448,7 +436,7 @@ def align(
         monitored = GdalRasterImage(str(monitored_image))
         reference = GdalRasterImage(str(reference_image))
 
-        aligned_mon, cropped_ref, _, alignment = apply_global_alignment(
+        aligned_mon, ref_out_img, _, alignment = apply_global_alignment(
             monitored, reference, None, out
         )
 
@@ -466,7 +454,7 @@ def align(
             click.echo(f"  [{row[0]:+10.4f}  {row[1]:+10.4f}  {row[2]:+10.4f}]")
         click.echo("\nOutputs:")
         click.echo(f"  monitored (aligned): {aligned_mon.file_name}")
-        click.echo(f"  reference:           {cropped_ref.file_name}")
+        click.echo(f"  reference:           {ref_out_img.file_name}")
 
         return 0
 

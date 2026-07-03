@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 Telespazio France.
+# Copyright (c) 2026 Telespazio France.
 #
 # This file is part of KARIOS.
 # See https://github.com/telespazio-tim/karios for further info.
@@ -153,8 +153,13 @@ def detect_global_alignment(
     rh, rw = ref.shape
     logger.info(
         "SIFT feature matching: mon=%dx%d  ref=%dx%d  contrast=%.3f  Lowe=%.2f  RANSAC=%.1fpx",
-        mw, mh, rw, rh,
-        SIFT_CONTRAST_THRESHOLD, LOWE_RATIO, RANSAC_THRESHOLD_PX,
+        mw,
+        mh,
+        rw,
+        rh,
+        SIFT_CONTRAST_THRESHOLD,
+        LOWE_RATIO,
+        RANSAC_THRESHOLD_PX,
     )
 
     sift = cv2.SIFT_create(
@@ -169,8 +174,7 @@ def detect_global_alignment(
         raise RuntimeError("SIFT found no descriptors in one or both images")
     if len(kp_mon) < MIN_MATCHES or len(kp_ref) < MIN_MATCHES:
         raise RuntimeError(
-            f"Too few SIFT keypoints: mon={len(kp_mon)} ref={len(kp_ref)} "
-            f"(need ≥{MIN_MATCHES})"
+            f"Too few SIFT keypoints: mon={len(kp_mon)} ref={len(kp_ref)} " f"(need ≥{MIN_MATCHES})"
         )
 
     logger.info("Keypoints detected: mon=%d  ref=%d", len(kp_mon), len(kp_ref))
@@ -198,7 +202,10 @@ def detect_global_alignment(
 
     logger.info(
         "Matches: raw=%d  Lowe<%.2f=%d  mutual=%d",
-        len(knn_fwd), LOWE_RATIO, len(lowe), len(good),
+        len(knn_fwd),
+        LOWE_RATIO,
+        len(lowe),
+        len(good),
     )
 
     if len(good) < MIN_MATCHES:
@@ -217,7 +224,9 @@ def detect_global_alignment(
         errors = np.linalg.norm(dst_pts - predicted, axis=1)
         logger.info(
             "Match error vs geotransform prior: median=%.1fpx  min=%.1fpx  max=%.1fpx",
-            float(np.median(errors)), float(errors.min()), float(errors.max()),
+            float(np.median(errors)),
+            float(errors.min()),
+            float(errors.max()),
         )
 
     matrix, inliers = cv2.findHomography(
@@ -234,7 +243,10 @@ def detect_global_alignment(
     n_inliers = int(inliers.sum())
     logger.info(
         "RANSAC initial fit: %s  inliers=%d/%d (%.1f%%)",
-        _decompose(matrix), n_inliers, len(good), 100.0 * n_inliers / len(good),
+        _decompose(matrix),
+        n_inliers,
+        len(good),
+        100.0 * n_inliers / len(good),
     )
 
     # ECC refinement on Sobel gradients (sensor-invariant), tried from every
@@ -254,7 +266,9 @@ def detect_global_alignment(
             continue
         logger.info(
             "ECC from %s: %s  ECC=%.4f",
-            name, _decompose(refined), ecc_score,
+            name,
+            _decompose(refined),
+            ecc_score,
         )
         converged.append((name, refined, ecc_score))
         if ecc_score > best_ecc:
@@ -324,8 +338,11 @@ def _refine_with_ecc(
     """
     rh, rw = ref_u8.shape
     warped_mon = cv2.warpPerspective(
-        mon_u8, init.astype(np.float32), (rw, rh),
-        flags=cv2.INTER_LINEAR, borderValue=0,
+        mon_u8,
+        init.astype(np.float32),
+        (rw, rh),
+        flags=cv2.INTER_LINEAR,
+        borderValue=0,
     )
     valid = (warped_mon > 0).astype(np.uint8)
     if valid.sum() < 1000:
@@ -417,7 +434,8 @@ def apply_global_alignment(
     prior = _prior_from_georefs(monitored, reference)
     if prior is not None:
         logger.info(
-            "Geotransform prior available: %s", _decompose(prior),
+            "Geotransform prior available: %s",
+            _decompose(prior),
         )
     else:
         logger.info("No geotransform prior (CRS mismatch or unreferenced)")
@@ -430,11 +448,7 @@ def apply_global_alignment(
     rh, rw = ref_arr.shape
     warp_m = alignment.matrix
 
-    border_mon = (
-        float(monitored.no_data_value)
-        if monitored.no_data_value is not None
-        else 0.0
-    )
+    border_mon = float(monitored.no_data_value) if monitored.no_data_value is not None else 0.0
     aligned_mon = cv2.warpPerspective(
         mon_arr.astype(np.float32),
         warp_m,

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 Telespazio France.
+# Copyright (c) 2026 Telespazio France.
 #
 # This file is part of KARIOS.
 # See https://github.com/telespazio-tim/karios for further info.
@@ -28,6 +28,7 @@ The configuration covers:
 - Optional inputs (mask files, DEM files)
 - Visualization options (title prefixes, DEM descriptions)
 """
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional

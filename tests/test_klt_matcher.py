@@ -490,8 +490,15 @@ def test_match_tile_auto_ksize_selects_best_inlier_ratio():
         # We can use the mock's 'idx' attribute to identify which ksize was used.
         p0_idx = getattr(p0, "idx", -1)
         count = best_count if p0_idx == 2 else 1
-        df = pd.DataFrame({"x0": list(range(count)), "y0": list(range(count)),
-                           "dx": [0] * count, "dy": [0] * count, "score": [0.9] * count})
+        df = pd.DataFrame(
+            {
+                "x0": list(range(count)),
+                "y0": list(range(count)),
+                "dx": [0] * count,
+                "dy": [0] * count,
+                "score": [0.9] * count,
+            }
+        )
         return df, ninit
 
     # Mock cv2.goodFeaturesToTrack to return a unique mock per ksize
@@ -510,10 +517,14 @@ def test_match_tile_auto_ksize_selects_best_inlier_ratio():
         lap.dtype = np.uint8
         return lap
 
-    with patch("karios.matcher.klt.klt_tracker", side_effect=mock_tracker), \
-         patch("karios.matcher.klt.cv2.goodFeaturesToTrack", side_effect=mock_gftt), \
-         patch("karios.matcher.klt.cv2.Laplacian", side_effect=mock_laplacian):
-        best_result, scores, selected_ksize = klt._match_tile_auto_ksize(tile, tile, np.ones((50, 50), dtype=np.uint8))
+    with (
+        patch("karios.matcher.klt.klt_tracker", side_effect=mock_tracker),
+        patch("karios.matcher.klt.cv2.goodFeaturesToTrack", side_effect=mock_gftt),
+        patch("karios.matcher.klt.cv2.Laplacian", side_effect=mock_laplacian),
+    ):
+        best_result, scores, selected_ksize = klt._match_tile_auto_ksize(
+            tile, tile, np.ones((50, 50), dtype=np.uint8)
+        )
 
     n = len(LAPLACIAN_AUTO_CANDIDATES)
     assert len(scores) == n * n
@@ -523,7 +534,9 @@ def test_match_tile_auto_ksize_selects_best_inlier_ratio():
     assert len(points) == best_count
     assert selected_ksize == (best_mon, best_ref)
     assert scores[(best_mon, best_ref)] == pytest.approx(best_count / ninit)
-    assert all(v == pytest.approx(1 / ninit) for k, v in scores.items() if k != (best_mon, best_ref))
+    assert all(
+        v == pytest.approx(1 / ninit) for k, v in scores.items() if k != (best_mon, best_ref)
+    )
 
 
 @patch("karios.matcher.klt.klt_tracker")
@@ -557,7 +570,9 @@ def test_match_tile_uses_auto_ksize(mock_cv2, mock_klt_tracker):
     mock_cv2.CV_8U = 0
     mock_cv2.goodFeaturesToTrack.return_value = np.array([[[10, 20]]], dtype=np.float32)
 
-    best_df = pd.DataFrame({"x0": [10, 20], "y0": [10, 20], "dx": [1, -1], "dy": [1, -1], "score": [0.9, 0.8]})
+    best_df = pd.DataFrame(
+        {"x0": [10, 20], "y0": [10, 20], "dx": [1, -1], "dy": [1, -1], "score": [0.9, 0.8]}
+    )
     mock_klt_tracker.return_value = (best_df, 5)
 
     result = klt._match_tile(0, 0, mon_img, ref_img, None)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 Telespazio France.
+# Copyright (c) 2026 Telespazio France.
 #
 # This file is part of KARIOS.
 # See https://github.com/telespazio-tim/karios for further info.
@@ -448,7 +448,9 @@ def align(
         click.echo(f"scale x/y:   {sx:.4f} / {sy:.4f}")
         click.echo(f"translation: tx={float(m[0,2]):+.2f}  ty={float(m[1,2]):+.2f}")
         click.echo(f"perspective: {float(m[2,0]):+.6f}  {float(m[2,1]):+.6f}")
-        click.echo(f"inliers:     {alignment.n_inliers}/{alignment.n_matches} ({alignment.score*100:.1f}%)")
+        click.echo(
+            f"inliers:     {alignment.n_inliers}/{alignment.n_matches} ({alignment.score*100:.1f}%)"
+        )
         click.echo("\nHomography (mon → ref):")
         for row in m:
             click.echo(f"  [{row[0]:+10.4f}  {row[1]:+10.4f}  {row[2]:+10.4f}]")
@@ -463,7 +465,9 @@ def align(
         return 1
 
 
-def _validate_configuration(config: RuntimeConfiguration, dem_file: Optional[Path], vector_mask: Optional[Path] = None) -> None:
+def _validate_configuration(
+    config: RuntimeConfiguration, dem_file: Optional[Path], vector_mask: Optional[Path] = None
+) -> None:
     """Validate configuration parameters and input files.
 
     Args:

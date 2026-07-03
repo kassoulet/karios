@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 Telespazio France.
+# Copyright (c) 2026 Telespazio France.
 #
 # This file is part of KARIOS.
 # See https://github.com/telespazio-tim/karios for further info.
@@ -620,11 +620,17 @@ class ChipService:
             ref_ksize = laplacian_ksize.get("ref", laplacian_ksize.get("mon", 1))
             mon_ksize = laplacian_ksize.get("mon", laplacian_ksize.get("ref", 1))
             self._write_laplacian_chip(
-                reference, x0_offset, y0_offset, ref_ksize,
+                reference,
+                x0_offset,
+                y0_offset,
+                ref_ksize,
                 out_dir_laplacian / reference_filename / f"REF_{x0}_{y0}.TIFF",
             )
             self._write_laplacian_chip(
-                monitored, x1_offset, y1_offset, mon_ksize,
+                monitored,
+                x1_offset,
+                y1_offset,
+                mon_ksize,
                 out_dir_laplacian / monitored_filename / f"MON_{x0}_{y0}.TIFF",
             )
 

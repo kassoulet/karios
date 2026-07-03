@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 Telespazio France.
+# Copyright (c) 2026 Telespazio France.
 #
 # This file is part of KARIOS.
 # See https://github.com/telespazio-tim/karios for further info.
@@ -534,9 +534,7 @@ class HtmlReportGenerator:
 
         # Runtime / resolved summary
         pixel_size_label = (
-            f"{self.runtime_config.pixel_size} m"
-            if self.runtime_config.pixel_size
-            else "Auto"
+            f"{self.runtime_config.pixel_size} m" if self.runtime_config.pixel_size else "Auto"
         )
         large_shift_label = (
             "Enabled" if self.runtime_config.enable_large_shift_detection else "Disabled"
@@ -565,9 +563,7 @@ class HtmlReportGenerator:
         for header, section in sections:
             if section is None:
                 continue
-            rows.append(
-                f'<tr class="config-section-header"><th colspan="2">{header}</th></tr>'
-            )
+            rows.append(f'<tr class="config-section-header"><th colspan="2">{header}</th></tr>')
             for field in dataclasses.fields(section):
                 value = self._format_config_value(getattr(section, field.name))
                 rows.append(f"<tr><th>{field.name}</th><td>{value}</td></tr>")
@@ -683,9 +679,7 @@ class HtmlReportGenerator:
 
             ref_raw_src = f"chips/{ref_name}/{ref_png.name}"
             mon_raw_path = self.output_dir / "chips" / mon_name / f"MON_{x0}_{y0}.png"
-            mon_raw_src = (
-                f"chips/{mon_name}/MON_{x0}_{y0}.png" if mon_raw_path.exists() else None
-            )
+            mon_raw_src = f"chips/{mon_name}/MON_{x0}_{y0}.png" if mon_raw_path.exists() else None
 
             raw_row = (
                 f'<div class="chip-row">'
@@ -696,18 +690,8 @@ class HtmlReportGenerator:
 
             lap_row = ""
             if has_laplacian:
-                ref_lap_path = (
-                    self.output_dir
-                    / "chips_laplacian"
-                    / ref_name
-                    / f"REF_{x0}_{y0}.png"
-                )
-                mon_lap_path = (
-                    self.output_dir
-                    / "chips_laplacian"
-                    / mon_name
-                    / f"MON_{x0}_{y0}.png"
-                )
+                ref_lap_path = self.output_dir / "chips_laplacian" / ref_name / f"REF_{x0}_{y0}.png"
+                mon_lap_path = self.output_dir / "chips_laplacian" / mon_name / f"MON_{x0}_{y0}.png"
                 ref_lap_src = (
                     f"chips_laplacian/{ref_name}/REF_{x0}_{y0}.png"
                     if ref_lap_path.exists()
@@ -775,10 +759,7 @@ class HtmlReportGenerator:
             for plot_path in self.report_paths.dem_plots:
                 relative_path = Path(plot_path).name
                 title = (
-                    relative_path.replace("dem_", "")
-                    .replace(".png", "")
-                    .replace("_", " ")
-                    .title()
+                    relative_path.replace("dem_", "").replace(".png", "").replace("_", " ").title()
                 )
                 dem_plots_html += f"""
                 <div class="image-container">
@@ -795,9 +776,7 @@ class HtmlReportGenerator:
             generation_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             monitored_image=self.match_result.monitored_image.file_name,
             reference_image=self.match_result.reference_image.file_name,
-            mask_file=self.match_result.mask.file_name
-            if self.match_result.mask
-            else "None",
+            mask_file=self.match_result.mask.file_name if self.match_result.mask else "None",
             dem_file=self.dem_file_path.name if self.dem_file_path else "None",
             config_rows_html=self._build_config_rows_html(),
             matched_points=len(self.match_result.points),
@@ -827,11 +806,7 @@ class HtmlReportGenerator:
             for p in self.report_paths.products:
                 p_path = Path(p)
                 p_name = p_path.name
-                p_type = (
-                    "Vector (GeoJSON)"
-                    if p_name.endswith(".json")
-                    else "Raster (GeoTIFF)"
-                )
+                p_type = "Vector (GeoJSON)" if p_name.endswith(".json") else "Raster (GeoTIFF)"
                 if "mask" in p_name:
                     p_type = "Mask (GeoTIFF)"
 

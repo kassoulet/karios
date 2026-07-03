@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 Telespazio France.
+# Copyright (c) 2026 Telespazio France.
 #
 # This file is part of KARIOS.
 # See https://github.com/telespazio-tim/karios for further info.
@@ -16,6 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Module to plot images, radial error and theta error"""
+
 import logging
 
 import numpy as np
@@ -131,9 +132,7 @@ class OverviewPlot(AbstractPlot):
         text = f"Monitored : {self._mon_img.file_name}\nReference : {self._ref_img.file_name}".expandtabs()
         axes.text(x=0, y=0.5, s=text, size="14", ha="left", va="center")
 
-    def _build_invalid_mask(
-        self, img: GdalRasterImage, apply_user_mask: bool
-    ) -> np.ndarray | None:
+    def _build_invalid_mask(self, img: GdalRasterImage, apply_user_mask: bool) -> np.ndarray | None:
         """Combine the user-provided mask, the --no-value DN filter, and the
         image's GDAL no-data value into a boolean array marking pixels to hide.
         Returns None when there is nothing to hide so the caller can skip

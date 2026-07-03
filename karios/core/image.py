@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 Telespazio France.
+# Copyright (c) 2026 Telespazio France.
 #
 # This file is part of KARIOS.
 # See https://github.com/telespazio-tim/karios for further info.
@@ -18,6 +18,7 @@
 
 
 """Module for image classes."""
+
 from __future__ import annotations
 
 import logging
@@ -136,7 +137,7 @@ def rasterize_vector_mask(
 
         # Create output raster
         driver = gdal.GetDriverByName("GTiff")
-        
+
         # Create temporary file if no output path provided
         if output_path is None:
             temp_file = tempfile.NamedTemporaryFile(suffix=".tif", delete=False)
@@ -171,7 +172,7 @@ def rasterize_vector_mask(
                 raster_ds,
                 [1],  # Bands to burn into
                 layer,
-                options=['BURN=1', 'ALL_TOUCHED=TRUE'],
+                options=["BURN=1", "ALL_TOUCHED=TRUE"],
             )
 
             # Flush cache to ensure data is written

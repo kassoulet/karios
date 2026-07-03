@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 Telespazio France.
+# Copyright (c) 2026 Telespazio France.
 #
 # This file is part of KARIOS.
 # See https://github.com/telespazio-tim/karios for further info.
@@ -515,12 +515,20 @@ class KLT:
             )
 
             if result is None:
-                logger.info("Auto laplacian: mon_ksize=%s ref_ksize=%s -> no result", mon_ksize, ref_ksize)
+                logger.info(
+                    "Auto laplacian: mon_ksize=%s ref_ksize=%s -> no result", mon_ksize, ref_ksize
+                )
                 return (mon_ksize, ref_ksize), 0.0, None
             points, ninit = result
             ratio = len(points) / ninit if ninit > 0 else 0.0
-            logger.info("Auto laplacian: mon_ksize=%s ref_ksize=%s -> inlier ratio=%.3f (%d/%d)",
-                        mon_ksize, ref_ksize, ratio, len(points), ninit)
+            logger.info(
+                "Auto laplacian: mon_ksize=%s ref_ksize=%s -> inlier ratio=%.3f (%d/%d)",
+                mon_ksize,
+                ref_ksize,
+                ratio,
+                len(points),
+                ninit,
+            )
             return (mon_ksize, ref_ksize), ratio, result
 
         with ThreadPoolExecutor() as executor:
@@ -538,8 +546,10 @@ class KLT:
                 best_result = result
                 best_ksize = pair
 
-        logger.info("Auto laplacian selected: mon_ksize=%s ref_ksize=%s (inlier ratio=%.3f)",
-                    best_ksize[0] if best_ksize else None,
-                    best_ksize[1] if best_ksize else None,
-                    best_ratio)
+        logger.info(
+            "Auto laplacian selected: mon_ksize=%s ref_ksize=%s (inlier ratio=%.3f)",
+            best_ksize[0] if best_ksize else None,
+            best_ksize[1] if best_ksize else None,
+            best_ratio,
+        )
         return best_result, scores, best_ksize

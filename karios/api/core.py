@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 Telespazio France.
+# Copyright (c) 2026 Telespazio France.
 #
 # This file is part of KARIOS.
 # See https://github.com/telespazio-tim/karios for further info.
@@ -526,17 +526,18 @@ class KariosAPI:
         self._check_quality(monitored_image, reference_image)
 
         if not monitored_image.is_compatible_with(reference_image):
-            raise KariosException(
-                f"""Monitored image geo info not compatible with reference image:
+            raise KariosException(f"""Monitored image geo info not compatible with reference image:
             * Monitored image : {monitored_image.image_information}
             * Reference image : {reference_image.image_information}
-            """
-            )
+            """)
 
         return reference_image, monitored_image
 
     def _load_mask(
-        self, monitored_image: GdalRasterImage, mask_file_path: Optional[Path], vector_mask_path: Optional[Path] = None
+        self,
+        monitored_image: GdalRasterImage,
+        mask_file_path: Optional[Path],
+        vector_mask_path: Optional[Path] = None,
     ) -> Optional[GdalRasterImage]:
         """Load mask as GdalRasterImage and check compatibility with monitored image.
 
@@ -555,7 +556,7 @@ class KariosAPI:
             Mask if compatible with monitored image, None if no mask provided
         """
         import numpy as np
-        
+
         raster_mask = None
         vector_mask = None
 
@@ -564,18 +565,17 @@ class KariosAPI:
             logger.info("Load raster mask file %s", mask_file_path)
             raster_mask = GdalRasterImage(mask_file_path)
             if not raster_mask.is_compatible_with(monitored_image):
-                raise KariosException(
-                    f"""Mask geo info not compatible with monitored image:
+                raise KariosException(f"""Mask geo info not compatible with monitored image:
             * Mask image : {raster_mask.image_information}
             * Monitored image : {monitored_image.image_information}
-            """
-                )
+            """)
             logger.info("Raster mask loaded")
 
         # Load vector mask if provided
         if vector_mask_path:
             logger.info("Load vector mask file %s", vector_mask_path)
             from karios.core.image import rasterize_vector_mask
+
             vector_mask = rasterize_vector_mask(str(vector_mask_path), monitored_image)
             logger.info("Vector mask rasterized and loaded")
 
@@ -592,13 +592,13 @@ class KariosAPI:
 
         # Combine both masks with AND logic
         logger.info("Combining raster and vector masks with AND logic")
-        combined_array = np.logical_and(
-            raster_mask.array > 0,
-            vector_mask.array > 0
-        ).astype(np.uint8)
+        combined_array = np.logical_and(raster_mask.array > 0, vector_mask.array > 0).astype(
+            np.uint8
+        )
 
         # Create combined mask
         import tempfile
+
         temp_file = tempfile.NamedTemporaryFile(suffix=".tif", delete=False)
         temp_path = temp_file.name
         temp_file.close()
@@ -614,7 +614,7 @@ class KariosAPI:
             "Mask combination: raster=%d valid pixels, vector=%d valid pixels, combined=%d valid pixels (AND logic)",
             raster_valid,
             vector_valid,
-            combined_valid
+            combined_valid,
         )
 
         return combined_mask

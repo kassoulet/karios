@@ -31,7 +31,7 @@ The configuration covers:
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 
 @dataclass
@@ -56,7 +56,7 @@ class RuntimeConfiguration:
         dem_description: Optional DEM source description for plots
     """
 
-    output_directory: Path
+    output_directory: Union[str, Path]
     gen_kp_mask: bool
     gen_delta_raster: bool
     generate_kp_chips: bool
@@ -65,3 +65,8 @@ class RuntimeConfiguration:
     pixel_size: Optional[float] = None
     title_prefix: Optional[str] = None
     dem_description: Optional[str] = None
+
+    def __post_init__(self):
+        # Some call sites (e.g. plot path builders) join paths with the `/`
+        # operator, which requires a Path instance, not a str.
+        self.output_directory = Path(self.output_directory)

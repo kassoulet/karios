@@ -17,9 +17,9 @@
 # limitations under the License.
 """Module to generate HTML reports for KARIOS results."""
 
+import base64
 import datetime
 import logging
-import shutil
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
@@ -29,6 +29,69 @@ if TYPE_CHECKING:
     from karios.core.configuration import ProcessingConfiguration
 
 logger = logging.getLogger(__name__)
+
+# Branding assets shipped alongside this module, inlined into the report pages
+# as data URIs so each page stands on its own without sidecar files.
+_ASSET_MIME_TYPES = {
+    ".png": "image/png",
+    ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+}
+
+_BANNER_ASSET = "karios_index_banner.webp"
+_FOOTER_LOGO_ASSET = "footer_logo.svg"
+
+# Placeholder in CSS_STYLES, substituted with the footer logo data URI. CSS_STYLES
+# is passed as a format *value*, so it cannot itself carry a `{}` format field.
+_FOOTER_LOGO_URI_TOKEN = "__FOOTER_LOGO_URI__"
+_FOOTER_LOGO_CSS_DECLARATION = f"background-image: url('{_FOOTER_LOGO_URI_TOKEN}');\n"
+
+
+def _asset_data_uri(asset_name: str) -> str | None:
+    """Encode a branding asset shipped with this module as a base64 data URI.
+
+    Args:
+        asset_name: file name of the asset, relative to this module directory.
+
+    Returns:
+        str|None: the `data:` URI, None if the asset is missing or unsupported.
+            Never raises: a report is still worth generating without branding.
+    """
+    asset_path = Path(__file__).parent / asset_name
+
+    mime_type = _ASSET_MIME_TYPES.get(asset_path.suffix.lower())
+    if mime_type is None:
+        logger.warning("Cannot inline report asset of unknown type %s", asset_path)
+        return None
+
+    try:
+        asset_bytes = asset_path.read_bytes()
+    except OSError as error:
+        logger.warning("Report asset %s not available: %s", asset_path, error)
+        return None
+
+    return f"data:{mime_type};base64,{base64.b64encode(asset_bytes).decode('ascii')}"
+
+
+def _build_css_styles() -> str:
+    """Return the report CSS with the footer logo inlined as a data URI."""
+    footer_logo_uri = _asset_data_uri(_FOOTER_LOGO_ASSET)
+    if footer_logo_uri is None:
+        # Drop the declaration rather than emit an empty url(), which browsers
+        # resolve against the page itself.
+        return CSS_STYLES.replace(_FOOTER_LOGO_CSS_DECLARATION, "")
+
+    return CSS_STYLES.replace(_FOOTER_LOGO_URI_TOKEN, footer_logo_uri)
+
+
+def _build_header_banner_html() -> str:
+    """Return the header banner `img` tag, empty if the banner is unavailable."""
+    banner_uri = _asset_data_uri(_BANNER_ASSET)
+    if banner_uri is None:
+        return ""
+
+    return f'<img src="{banner_uri}" alt="KARIOS Banner" class="header-banner">'
+
 
 CSS_STYLES = """
         body {
@@ -116,7 +179,7 @@ CSS_STYLES = """
             margin-top: 40px;
             padding: 80px 20px;
             border-top: 1px solid #ddd;
-            background-image: url('footer_logo.svg');
+            background-image: url('__FOOTER_LOGO_URI__');
             background-repeat: no-repeat;
             background-position: center;
             background-size: 200px;
@@ -260,7 +323,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
     <header>
-        <img src="karios_index_banner.webp" alt="KARIOS Banner" class="header-banner">
+        {header_banner_html}
     </header>
 
     <nav class="nav">
@@ -352,7 +415,7 @@ PRODUCTS_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
     <header>
-        <img src="karios_index_banner.webp" alt="KARIOS Banner" class="header-banner">
+        {header_banner_html}
     </header>
 
     <nav class="nav">
@@ -401,7 +464,7 @@ CHIPS_TEMPLATE = """<!DOCTYPE html>
 </head>
 <body>
     <header>
-        <img src="karios_index_banner.webp" alt="KARIOS Banner" class="header-banner">
+        {header_banner_html}
     </header>
 
     <nav class="nav">
@@ -725,25 +788,12 @@ class HtmlReportGenerator:
         grid = f'<div class="chips-grid">{"".join(items)}</div>'
         return _SORT_BAR_HTML + grid + _SORT_SCRIPT
 
-    def _copy_assets(self):
-        """Copy required assets to output directory."""
-        banner_src = Path(__file__).parent / "karios_index_banner.webp"
-        if banner_src.exists():
-            shutil.copy(banner_src, self.output_dir / "karios_index_banner.webp")
-        else:
-            logger.warning("Banner image not found at %s", banner_src)
-
-        footer_logo_src = Path(__file__).parent / "footer_logo.svg"
-        if footer_logo_src.exists():
-            shutil.copy(footer_logo_src, self.output_dir / "footer_logo.svg")
-        else:
-            logger.warning("Footer logo image not found at %s", footer_logo_src)
-
     def generate(self) -> Path:
         """Generate the HTML report file(s)."""
         logger.info("Generating HTML report")
 
-        self._copy_assets()
+        css_styles = _build_css_styles()
+        header_banner_html = _build_header_banner_html()
 
         # Check for products and chips to build navigation
         has_products = len(self.report_paths.products) > 0
@@ -770,7 +820,8 @@ class HtmlReportGenerator:
 
         # 1. Generate Summary Page (report.html)
         summary_content = HTML_TEMPLATE.format(
-            css_styles=CSS_STYLES,
+            css_styles=css_styles,
+            header_banner_html=header_banner_html,
             products_link=products_link,
             chips_link=chips_link,
             generation_date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -818,7 +869,8 @@ class HtmlReportGenerator:
                 </tr>"""
 
             products_content = PRODUCTS_TEMPLATE.format(
-                css_styles=CSS_STYLES,
+                css_styles=css_styles,
+                header_banner_html=header_banner_html,
                 title_prefix=self.runtime_config.title_prefix or "KARIOS",
                 chips_link=chips_link,
                 products_rows=products_rows,
@@ -840,7 +892,8 @@ class HtmlReportGenerator:
             chips_section_html = f'<div class="section">{chips_grid}</div>'
 
             chips_content = CHIPS_TEMPLATE.format(
-                css_styles=CSS_STYLES,
+                css_styles=css_styles,
+                header_banner_html=header_banner_html,
                 title_prefix=self.runtime_config.title_prefix or "KARIOS",
                 products_link=products_link,
                 chips_vrt_links=chips_vrt_links,

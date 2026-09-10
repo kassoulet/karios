@@ -147,6 +147,7 @@ class KariosAPI:
             self._processing_configuration.klt_configuration,
             self._runtime_configuration.gen_delta_raster,
             self._runtime_configuration.output_directory,
+            self._runtime_configuration.no_values,
         )
 
         self._zncc_service = ZNCCService()
@@ -286,6 +287,12 @@ class KariosAPI:
         if match_result.mask is not None:
             masked_image = np.copy(match_result.monitored_image.array)
             masked_image[match_result.mask.array == 0] = 0
+
+        if self._runtime_configuration.no_values:
+            # the mask counts these as data otherwise, overstating the overlap
+            masked_image = np.where(
+                np.isin(masked_image, self._runtime_configuration.no_values), 0, masked_image
+            )
 
         nb_valid_pixel = np.count_nonzero(masked_image)
         logger.info("NB of valid px %s", nb_valid_pixel)

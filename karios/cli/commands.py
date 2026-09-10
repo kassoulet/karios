@@ -69,7 +69,7 @@ click.rich_click.OPTION_GROUPS = {
         },
         {
             "name": "Advanced Options",
-            "options": ["--enable-large-shift-detection"],
+            "options": ["--enable-large-shift-detection", "--enable-coarse-to-fine"],
         },
         {
             "name": "Logging Options",
@@ -225,6 +225,11 @@ def cli() -> None:
     is_flag=True,
     help="Enable detection and correction of large pixel shifts",
 )
+@click.option(
+    "--enable-coarse-to-fine",
+    is_flag=True,
+    help="Match by descending the image pyramid explicitly, keeping key points near data edges",
+)
 @click.option("--debug", "-d", is_flag=True, help="Enable Debug mode")
 @click.option("--no-log-file", is_flag=True, help="Do not log in file")
 @click.option(
@@ -251,6 +256,7 @@ def process(
     title_prefix: Optional[str],
     dem_description: Optional[str],
     enable_large_shift_detection: bool,
+    enable_coarse_to_fine: bool,
     no_log_file: bool,
     debug: bool,
     log_file_path: str,
@@ -314,6 +320,7 @@ def process(
             generate_kp_chips=generate_kp_chips,
             dem_description=dem_description,
             enable_large_shift_detection=enable_large_shift_detection,
+            enable_coarse_to_fine=enable_coarse_to_fine,
             no_values=list(no_value) if no_value else None,
         )
 

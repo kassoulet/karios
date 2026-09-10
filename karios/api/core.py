@@ -148,6 +148,7 @@ class KariosAPI:
             self._runtime_configuration.gen_delta_raster,
             self._runtime_configuration.output_directory,
             self._runtime_configuration.no_values,
+            self._runtime_configuration.enable_coarse_to_fine,
         )
 
         self._zncc_service = ZNCCService()

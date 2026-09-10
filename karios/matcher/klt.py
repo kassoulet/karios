@@ -32,7 +32,9 @@ from pandas import DataFrame
 from skimage import io
 
 from karios.core.configuration import KLTConfiguration
+from karios.core.errors import ConfigurationError
 from karios.core.image import GdalRasterImage
+from karios.matcher.coarse_to_fine import coarse_to_fine_tracker
 
 logger = logging.getLogger(__name__)
 
@@ -274,6 +276,7 @@ class KLT:
         gen_laplacian: bool = False,
         out_dir: str | None = None,
         no_values: list[int] | None = None,
+        coarse_to_fine: bool = False,
     ):
         """Constructor
 
@@ -284,11 +287,25 @@ class KLT:
             no_values (list[int] | None, optional): DN values to exclude from
                 matching, for products filled with a value other than their
                 declared no-data. Defaults to None.
+            coarse_to_fine (bool, optional): descend the pyramid explicitly rather
+                than letting OpenCV recurse its own. Defaults to False.
+
+        Raises:
+            ConfigurationError: if coarse_to_fine is combined with an "auto"
+                Laplacian kernel size.
         """
+        if coarse_to_fine and conf.laplacian_kernel_size == "auto":
+            raise ConfigurationError(
+                'laplacian_kernel_size "auto" is not supported with coarse-to-fine '
+                "matching: the kernel search compares full resolution Laplacians and "
+                "assumes single resolution matching."
+            )
+
         self._conf: KLTConfiguration = conf
         self._gen_laplacian = gen_laplacian
         self._out_dir = out_dir
         self._no_values = no_values
+        self._coarse_to_fine = coarse_to_fine
         self._auto_selected_ksizes: list[tuple[int, int]] = []
         self._selected_polarities: list[str] = []
 
@@ -547,7 +564,13 @@ class KLT:
         ref_ksize = ksize.get("ref", ksize.get("mon", 1)) if isinstance(ksize, dict) else ksize
         img_lap = cv2.Laplacian(_to_uint8(img_for_lap), cv2.CV_8U, ksize=mon_ksize)
         ref_lap = cv2.Laplacian(_to_uint8(ref_box), cv2.CV_8U, ksize=ref_ksize)
-        result = klt_tracker(ref_lap, img_lap, mask_box, self._conf)
+        if self._coarse_to_fine:
+            # takes the raw boxes: each level is downsampled before filtering
+            result = coarse_to_fine_tracker(
+                ref_box, img_for_lap, mask_box, self._conf, mon_ksize, ref_ksize
+            )
+        else:
+            result = klt_tracker(ref_lap, img_lap, mask_box, self._conf)
         return result, (img_lap, ref_lap, mon_ksize, ref_ksize, invert_mon)
 
     def _select_best_polarity(self, normal_res, normal_dump, inverted_res, inverted_dump):

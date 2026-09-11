@@ -785,7 +785,7 @@ def _conf(**overrides):
 
 def test_klt_configuration_exposes_max_level_with_a_default():
     """Pyramid depth is configurable, and configs that omit it still load."""
-    assert _conf().maxLevel == 3
+    assert _conf().maxLevel == 1
     assert _conf(maxLevel=2).maxLevel == 2
 
 

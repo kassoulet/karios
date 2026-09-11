@@ -34,6 +34,7 @@ from skimage import io
 from karios.core.configuration import KLTConfiguration
 from karios.core.errors import ConfigurationError
 from karios.core.image import GdalRasterImage
+from karios.core.radiometry import to_uint8
 from karios.matcher.coarse_to_fine import coarse_to_fine_tracker
 
 logger = logging.getLogger(__name__)
@@ -41,14 +42,41 @@ logger = logging.getLogger(__name__)
 LAPLACIAN_AUTO_CANDIDATES = [3, 5, 7, 9, 11]
 
 
-def _to_uint8(arr: np.ndarray) -> np.ndarray:
-    """Normalize an array to uint8, no-op if already uint8."""
+def _to_uint8_legacy_minmax(arr: np.ndarray) -> np.ndarray:
+    """Scale to uint8 from the array's own minimum and maximum.
+
+    Fragile: the mapping is decided by the two most extreme pixels, so a single
+    outlier or infinity flattens everything else. Kept for integer rasters only,
+    because changing their stretch shifts every existing result by a couple of
+    percent and the end-to-end reference data is pinned to it.
+
+    TODO: drop this once that reference data is regenerated deliberately, and
+    let `karios.core.radiometry.to_uint8` handle every dtype.
+    """
     if arr.dtype == np.uint8:
         return arr
     arr_min, arr_max = float(np.nanmin(arr)), float(np.nanmax(arr))
     if arr_max > arr_min:
         return ((arr - arr_min) / (arr_max - arr_min) * 255).astype(np.uint8)
     return np.zeros_like(arr, dtype=np.uint8)
+
+
+def _stretch(arr: np.ndarray) -> np.ndarray:
+    """Prepare pixel data for the 8-bit OpenCV calls.
+
+    Float rasters take the percentile stretch, which tolerates the outliers,
+    infinities and sentinel fill values they tend to carry. Integer rasters keep
+    the historical minimum/maximum stretch so existing results do not move.
+
+    Note the stretch runs on the raw tile, before the no-data mask is applied, so
+    an extreme value sitting inside a no-data region still influences the
+    percentiles - far less than it influenced the minimum and maximum, but not
+    zero.
+    """
+    if np.issubdtype(arr.dtype, np.floating):
+        return to_uint8(arr)
+
+    return _to_uint8_legacy_minmax(arr)
 
 
 def _tracking_margin(matching_winsize: int, max_level: int) -> int:
@@ -74,7 +102,7 @@ def _valid_mask(
     ref_box: NDArray,
     mon_no_data: float | None,
     ref_no_data: float | None,
-    no_values: list[int] | None,
+    no_values: list[float] | None,
 ) -> NDArray:
     """Build the matching mask for a pair of boxes.
 
@@ -275,7 +303,7 @@ class KLT:
         conf: KLTConfiguration,
         gen_laplacian: bool = False,
         out_dir: str | None = None,
-        no_values: list[int] | None = None,
+        no_values: list[float] | None = None,
         coarse_to_fine: bool = False,
     ):
         """Constructor
@@ -284,7 +312,7 @@ class KLT:
             conf (KLTConfiguration): KLT configuration
             gen_laplacian: shall dump laplacian results
             out_dir (str | None, optional): laplacian result dir. Defaults to None.
-            no_values (list[int] | None, optional): DN values to exclude from
+            no_values (list[float] | None, optional): DN values to exclude from
                 matching, for products filled with a value other than their
                 declared no-data. Defaults to None.
             coarse_to_fine (bool, optional): descend the pyramid explicitly rather
@@ -488,8 +516,8 @@ class KLT:
         return Counter(self._auto_selected_ksizes).most_common(1)[0][0]
 
     def _apply_laplacian_and_track(self, img_box, ref_box, mask_box, mon_ksize, ref_ksize):
-        lap_img = cv2.Laplacian(_to_uint8(img_box), cv2.CV_8U, ksize=mon_ksize)
-        lap_ref = cv2.Laplacian(_to_uint8(ref_box), cv2.CV_8U, ksize=ref_ksize)
+        lap_img = cv2.Laplacian(_stretch(img_box), cv2.CV_8U, ksize=mon_ksize)
+        lap_ref = cv2.Laplacian(_stretch(ref_box), cv2.CV_8U, ksize=ref_ksize)
         return klt_tracker(lap_ref, lap_img, mask_box, self._conf)
 
     def _log_polarity_setting(self) -> None:
@@ -548,7 +576,7 @@ class KLT:
                 dump is (img_lap, ref_lap, mon_ksize, ref_ksize, invert_mon) for
                 later optional writing, or None when no Laplacian was produced.
         """
-        img_for_lap = (255 - _to_uint8(img_box)) if invert_mon else img_box
+        img_for_lap = (255 - _stretch(img_box)) if invert_mon else img_box
 
         ksize = self._conf.laplacian_kernel_size
         if ksize == "auto":
@@ -564,8 +592,8 @@ class KLT:
 
         mon_ksize = ksize.get("mon", ksize.get("ref", 1)) if isinstance(ksize, dict) else ksize
         ref_ksize = ksize.get("ref", ksize.get("mon", 1)) if isinstance(ksize, dict) else ksize
-        img_lap = cv2.Laplacian(_to_uint8(img_for_lap), cv2.CV_8U, ksize=mon_ksize)
-        ref_lap = cv2.Laplacian(_to_uint8(ref_box), cv2.CV_8U, ksize=ref_ksize)
+        img_lap = cv2.Laplacian(_stretch(img_for_lap), cv2.CV_8U, ksize=mon_ksize)
+        ref_lap = cv2.Laplacian(_stretch(ref_box), cv2.CV_8U, ksize=ref_ksize)
         if self._coarse_to_fine:
             # takes the raw boxes: each level is downsampled before filtering
             result = coarse_to_fine_tracker(
@@ -613,8 +641,8 @@ class KLT:
         combinations = list(itertools.product(LAPLACIAN_AUTO_CANDIDATES, repeat=2))
 
         # Pre-compute uint8 conversions once
-        img_uint8 = _to_uint8(img_box)
-        ref_uint8 = _to_uint8(ref_box)
+        img_uint8 = _stretch(img_box)
+        ref_uint8 = _stretch(ref_box)
 
         # Pre-compute Laplacians for each candidate kernel size
         mon_laplacians = {

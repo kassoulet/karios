@@ -54,6 +54,7 @@ class RuntimeConfiguration:
                    instead of letting OpenCV recurse its own, which keeps key points near
                    data edges. Incompatible with laplacian_kernel_size "auto".
         no_values: Optional list of DN (Digital Number) values to filter out from key points.
+                   Accepts floats, since a float raster's fill value need not be a whole number.
                    Key points where reference or monitored image has these values will be excluded.
         pixel_size: Optional pixel size in meters. Ignored if image resolution
                    can be read from input images
@@ -67,7 +68,7 @@ class RuntimeConfiguration:
     generate_kp_chips: bool
     enable_large_shift_detection: bool
     enable_coarse_to_fine: bool = False
-    no_values: Optional[list[int]] = None
+    no_values: Optional[list[float]] = None
     pixel_size: Optional[float] = None
     title_prefix: Optional[str] = None
     dem_description: Optional[str] = None

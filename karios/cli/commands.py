@@ -207,7 +207,7 @@ def cli() -> None:
 )
 @click.option(
     "--no-value",
-    type=int,
+    type=float,
     multiple=True,
     default=None,
     help="Filter out key points where reference or monitored image has this DN value. Can be used multiple times (e.g., --no-value 0 --no-value 255)",
@@ -252,7 +252,7 @@ def process(
     generate_intermediate_product: bool,
     generate_kp_chips: bool,
     vector_mask: Optional[Path],
-    no_value: tuple[int, ...],
+    no_value: tuple[float, ...],
     title_prefix: Optional[str],
     dem_description: Optional[str],
     enable_large_shift_detection: bool,

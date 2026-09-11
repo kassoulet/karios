@@ -157,8 +157,14 @@ Requirements:
 
 Recommendation:
 
-- The user shall carefully check the dynamic range of the monitored and reference images, because KARIOS converts these input data into integers.  
-  For instance, providing float values between 0 and 1 will give very poor results. In that case, it is recommended to multiply the data by 100.
+- KARIOS converts input data to 8 bit internally, so the *shape* of the dynamic range
+  matters, not its scale. Rescaling a float image (for instance multiplying values in
+  [0, 1] by 100) makes no difference and is not needed.  
+  What does matter is extreme and non-finite pixels. For float rasters the conversion
+  takes its bounds from the 2nd and 98th percentile of the finite pixels, so a few
+  stray values are tolerated; for integer rasters it still uses the minimum and
+  maximum, where a single outlier compresses everything else. Mark such pixels as
+  no-data in the raster, or exclude them with `--no-value`.
 - Input files shall contain only one layer (band) of data, and the format shall be recognized by GDAL library.
 
 ## CLI Usage

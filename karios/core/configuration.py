@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 Telespazio France.
+# Copyright (c) 2026 Telespazio France.
 #
 # This file is part of KARIOS.
 # See https://github.com/telespazio-tim/karios for further info.
@@ -21,12 +21,13 @@ Represents the configuration of the application.
 
 Contains inputs, outputs and processings parameters.
 """
+
 import json
 import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Dict, Literal, Optional, Union
 
 from karios.core.errors import ConfigurationError
 
@@ -45,8 +46,9 @@ class KLTConfiguration:
     qualityLevel: float
     xStart: int
     tile_size: int
-    laplacian_kernel_size: int
+    laplacian_kernel_size: Union[int, Dict[str, int], Literal["auto"]]
     outliers_filtering: bool
+    laplacian_invert_polarity: Union[bool, Literal["auto"]] = False
 
 
 @dataclass

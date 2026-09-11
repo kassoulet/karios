@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 Telespazio France.
+# Copyright (c) 2026 Telespazio France.
 #
 # This file is part of KARIOS.
 # See https://github.com/telespazio-tim/karios for further info.
@@ -200,7 +200,7 @@ class CircularErrorPlot(AbstractPlot):
         # and other programs for its speed and simplicity.
 
         # bins , return the bins edge, (length(hist)+1)
-        (hist, bins) = np.histogram(
+        hist, bins = np.histogram(
             vect * self._img_res,
             bins="sqrt",
             range=(-v_max * self._img_res, v_max * self._img_res),
@@ -303,7 +303,7 @@ class CircularErrorPlot(AbstractPlot):
         return scatter
 
     def _hist_vector(self, axes: Axes, vect, direction, orientation="vertical"):
-        (hist, bins) = self._compute_histogram(vect, direction)
+        hist, bins = self._compute_histogram(vect, direction)
 
         # starting from bin edge compute the center of each bin
         # center = (bins[:-1] + bins[1:]) / 2

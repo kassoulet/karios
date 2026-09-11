@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 Telespazio France.
+# Copyright (c) 2026 Telespazio France.
 #
 # This file is part of KARIOS.
 # See https://github.com/telespazio-tim/karios for further info.
@@ -19,6 +19,7 @@
 
 A tool for comparing and matching images using KLT feature tracking.
 """
+
 from karios.api.config import RuntimeConfiguration
 from karios.api.core import KariosAPI
 from karios.version import __version__

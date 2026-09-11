@@ -299,6 +299,9 @@ class TestVectorMaskIntegration:
         # Create vector mask
         geojson_data = {
             "type": "FeatureCollection",
+            # these coordinates are UTM 31N, not lon/lat; without this the GeoJSON
+            # driver assumes EPSG:4326 and PROJ rejects the latitude
+            "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::32631"}},
             "features": [
                 {
                     "type": "Feature",

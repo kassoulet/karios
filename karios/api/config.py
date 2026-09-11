@@ -33,6 +33,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union
 
+from karios.core.errors import ConfigurationError
+
 
 @dataclass
 class RuntimeConfiguration:
@@ -71,6 +73,14 @@ class RuntimeConfiguration:
     dem_description: Optional[str] = None
 
     def __post_init__(self):
+        if self.enable_large_shift_detection and self.enable_coarse_to_fine:
+            raise ConfigurationError(
+                "enable_large_shift_detection and enable_coarse_to_fine cannot be "
+                "combined: both remove a coarse displacement, large shift by "
+                "pre-shifting the monitored image and coarse-to-fine by seeding "
+                "the tracker, so applying them together corrects it twice."
+            )
+
         # Some call sites (e.g. plot path builders) join paths with the `/`
         # operator, which requires a Path instance, not a str.
         self.output_directory = Path(self.output_directory)

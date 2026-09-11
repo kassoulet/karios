@@ -101,3 +101,29 @@ def test_coarse_to_fine_recovers_the_true_displacement():
 
     assert points["dx"].median() == pytest.approx(shift, abs=0.5)
     assert points["dy"].median() == pytest.approx(shift, abs=0.5)
+
+
+def _runtime(**overrides):
+    from karios.api.config import RuntimeConfiguration
+
+    base = dict(
+        output_directory="/tmp/karios-test",
+        gen_kp_mask=False,
+        gen_delta_raster=False,
+        generate_kp_chips=False,
+        enable_large_shift_detection=False,
+    )
+    base.update(overrides)
+    return RuntimeConfiguration(**base)
+
+
+def test_large_shift_and_coarse_to_fine_are_mutually_exclusive():
+    """Both correct a coarse displacement; running both is contradictory."""
+    with pytest.raises(ConfigurationError, match="coarse-to-fine"):
+        _runtime(enable_large_shift_detection=True, enable_coarse_to_fine=True)
+
+
+def test_either_switch_alone_is_accepted():
+    """The exclusion must not block the individual switches."""
+    assert _runtime(enable_large_shift_detection=True).enable_large_shift_detection is True
+    assert _runtime(enable_coarse_to_fine=True).enable_coarse_to_fine is True

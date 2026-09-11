@@ -268,8 +268,8 @@ karios process monitored.tif reference.tif mask.tif \
 
 | Option | Type | Description |
 |--------|------|------------|
-| `--enable-large-shift-detection` | FLAG | Enable detection and correction of large pixel shifts |
-| `--enable-coarse-to-fine` | FLAG | Match by descending the image pyramid explicitly, keeping key points near data edges. Not compatible with `laplacian_kernel_size: "auto"`. See [KLT param leverage](#maxlevel--coarse-to-fine-matching) |
+| `--enable-large-shift-detection` | FLAG | Enable detection and correction of large pixel shifts. Mutually exclusive with `--enable-coarse-to-fine` |
+| `--enable-coarse-to-fine` | FLAG | Match by descending the image pyramid explicitly, keeping key points near data edges. Mutually exclusive with `--enable-large-shift-detection`, and not compatible with `laplacian_kernel_size: "auto"`. See [KLT param leverage](#maxlevel--coarse-to-fine-matching) |
 
 #### Logging Options
 

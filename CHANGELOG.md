@@ -10,7 +10,9 @@
   rather than a broken one. On four scenes (SPOT5, Landsat-8/Sentinel-2, MSS terrain,
   Sentinel-2 10980²) it produced 20-100% more key points, far better coverage at data edges,
   and lower dispersion, for 1.4-1.6x the matching time and no extra memory. Not compatible
-  with `laplacian_kernel_size: "auto"`, which is rejected when the matcher is built.
+  with `laplacian_kernel_size: "auto"`, which is rejected when the matcher is built, nor with
+  `--enable-large-shift-detection`: both remove a coarse displacement, so combining them would
+  correct it twice.
 - **Configurable pyramid depth** (`klt_matching.maxLevel`, default `3`): previously a source
   constant. In the default matching mode this is the parameter that most affects results, since
   the lost edge band scales as `(matching_winsize / 2) * 2**maxLevel`.

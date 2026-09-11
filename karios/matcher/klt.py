@@ -552,12 +552,14 @@ class KLT:
 
         ksize = self._conf.laplacian_kernel_size
         if ksize == "auto":
-            result, _, best_ksize = self._match_tile_auto_ksize(img_for_lap, ref_box, mask_box)
+            result, _, best_ksize, best_laplacians = self._match_tile_auto_ksize(
+                img_for_lap, ref_box, mask_box
+            )
             if best_ksize is None:
                 return result, None
             mon_ksize, ref_ksize = best_ksize
-            img_lap = cv2.Laplacian(_to_uint8(img_for_lap), cv2.CV_8U, ksize=mon_ksize)
-            ref_lap = cv2.Laplacian(_to_uint8(ref_box), cv2.CV_8U, ksize=ref_ksize)
+            # the search already filtered the tile at every candidate size
+            img_lap, ref_lap = best_laplacians
             return result, (img_lap, ref_lap, mon_ksize, ref_ksize, invert_mon)
 
         mon_ksize = ksize.get("mon", ksize.get("ref", 1)) if isinstance(ksize, dict) else ksize
@@ -604,8 +606,9 @@ class KLT:
         """Try all (mon_ksize, ref_ksize) combinations and return the result with the highest inlier ratio.
 
         Returns:
-            tuple[tuple[DataFrame, int] | None, dict[tuple[int, int], float]]: best klt_tracker
-                result and scores dict mapping each (mon_ksize, ref_ksize) pair to its inlier ratio.
+            tuple: best klt_tracker result, scores dict mapping each
+                (mon_ksize, ref_ksize) pair to its inlier ratio, the winning pair,
+                and the winning pair's already-computed (mon, ref) Laplacians.
         """
         combinations = list(itertools.product(LAPLACIAN_AUTO_CANDIDATES, repeat=2))
 
@@ -690,4 +693,8 @@ class KLT:
             best_ksize[1] if best_ksize else None,
             best_ratio,
         )
-        return best_result, scores, best_ksize
+        best_laplacians = (
+            (mon_laplacians[best_ksize[0]], ref_laplacians[best_ksize[1]]) if best_ksize else None
+        )
+
+        return best_result, scores, best_ksize, best_laplacians

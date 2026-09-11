@@ -289,9 +289,8 @@ class TestVectorMaskIntegration:
         driver = gdal.GetDriverByName("GTiff")
         ref_ds = driver.Create(str(ref_path), 50, 50, 1, gdal.GDT_Byte)
         ref_ds.SetGeoTransform([500000, 1, 0, 4600000, 0, -1])
-        ref_ds.SetProjection(
-            'PROJCS["WGS 84 / UTM zone 31N",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1]]'
-        )
+        ref_ds_projection = 'PROJCS["WGS 84 / UTM zone 31N",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["latitude_of_origin",0],PARAMETER["central_meridian",3],PARAMETER["scale_factor",0.9996],PARAMETER["false_easting",500000],PARAMETER["false_northing",0],UNIT["metre",1]]'
+        ref_ds.SetProjection(ref_ds_projection)
         ref_ds.GetRasterBand(1).WriteArray(ref_array)
         ref_ds = None
 
@@ -328,6 +327,8 @@ class TestVectorMaskIntegration:
         raster_mask_path = tmp_path / "mask.tif"
         mask_ds = driver.Create(str(raster_mask_path), 50, 50, 1, gdal.GDT_Byte)
         mask_ds.SetGeoTransform([500000, 1, 0, 4600000, 0, -1])
+        # the mask must carry a CRS, or the compatibility check has nothing to compare
+        mask_ds.SetProjection(ref_ds_projection)
         mask_ds.GetRasterBand(1).WriteArray(np.ones((50, 50), dtype=np.uint8))
         mask_ds = None
 

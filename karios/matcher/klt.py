@@ -34,6 +34,7 @@ from skimage import io
 from karios.core.configuration import KLTConfiguration
 from karios.core.errors import ConfigurationError
 from karios.core.image import GdalRasterImage
+from karios.core.radiometry import laplacian_to_uint8, to_uint8
 from karios.matcher.coarse_to_fine import coarse_to_fine_tracker
 
 logger = logging.getLogger(__name__)
@@ -58,6 +59,33 @@ def _to_uint8_legacy_minmax(arr: np.ndarray) -> np.ndarray:
     if arr_max > arr_min:
         return ((arr - arr_min) / (arr_max - arr_min) * 255).astype(np.uint8)
     return np.zeros_like(arr, dtype=np.uint8)
+
+
+def _stretch(arr: np.ndarray) -> np.ndarray:
+    """Prepare pixel data for the 8-bit OpenCV calls.
+
+    Float rasters take the percentile stretch, which tolerates the outliers,
+    infinities and sentinel fill values they tend to carry. Integer rasters keep
+    the historical minimum/maximum stretch so existing results do not move.
+
+    Note the stretch runs on the raw tile, before the no-data mask is applied, so
+    an extreme value sitting inside a no-data region still influences the
+    percentiles - far less than it influenced the minimum and maximum, but not
+    zero.
+    """
+    if np.issubdtype(arr.dtype, np.floating):
+        return to_uint8(arr)
+
+    return _to_uint8_legacy_minmax(arr)
+
+
+def _laplacian(arr: np.ndarray, ksize: int) -> np.ndarray:
+    """Laplacian of `arr`, rescaled to uint8 without CV_8U's clipping/saturation.
+
+    Computed at CV_32F so the convolution itself never saturates, then
+    rescaled by `radiometry.laplacian_to_uint8`.
+    """
+    return laplacian_to_uint8(cv2.Laplacian(arr, cv2.CV_32F, ksize=ksize))
 
 
 def _tracking_margin(matching_winsize: int, max_level: int) -> int:
@@ -497,8 +525,8 @@ class KLT:
         return Counter(self._auto_selected_ksizes).most_common(1)[0][0]
 
     def _apply_laplacian_and_track(self, img_box, ref_box, mask_box, mon_ksize, ref_ksize):
-        lap_img = cv2.Laplacian(_stretch(img_box), cv2.CV_8U, ksize=mon_ksize)
-        lap_ref = cv2.Laplacian(_stretch(ref_box), cv2.CV_8U, ksize=ref_ksize)
+        lap_img = _laplacian(_stretch(img_box), mon_ksize)
+        lap_ref = _laplacian(_stretch(ref_box), ref_ksize)
         return klt_tracker(lap_ref, lap_img, mask_box, self._conf)
 
     def _log_polarity_setting(self) -> None:
@@ -573,8 +601,8 @@ class KLT:
 
         mon_ksize = ksize.get("mon", ksize.get("ref", 1)) if isinstance(ksize, dict) else ksize
         ref_ksize = ksize.get("ref", ksize.get("mon", 1)) if isinstance(ksize, dict) else ksize
-        img_lap = cv2.Laplacian(_to_uint8(img_for_lap), cv2.CV_8U, ksize=mon_ksize)
-        ref_lap = cv2.Laplacian(_to_uint8(ref_box), cv2.CV_8U, ksize=ref_ksize)
+        img_lap = _laplacian(_stretch(img_for_lap), mon_ksize)
+        ref_lap = _laplacian(_stretch(ref_box), ref_ksize)
         if self._coarse_to_fine:
             # takes the raw boxes: each level is downsampled before filtering
             result = coarse_to_fine_tracker(
@@ -626,12 +654,8 @@ class KLT:
         ref_uint8 = _stretch(ref_box)
 
         # Pre-compute Laplacians for each candidate kernel size
-        mon_laplacians = {
-            k: cv2.Laplacian(img_uint8, cv2.CV_8U, ksize=k) for k in LAPLACIAN_AUTO_CANDIDATES
-        }
-        ref_laplacians = {
-            k: cv2.Laplacian(ref_uint8, cv2.CV_8U, ksize=k) for k in LAPLACIAN_AUTO_CANDIDATES
-        }
+        mon_laplacians = {k: _laplacian(img_uint8, k) for k in LAPLACIAN_AUTO_CANDIDATES}
+        ref_laplacians = {k: _laplacian(ref_uint8, k) for k in LAPLACIAN_AUTO_CANDIDATES}
 
         # Pre-compute features to track for each reference Laplacian
         feature_params = {

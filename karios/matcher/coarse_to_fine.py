@@ -40,6 +40,7 @@ from numpy.typing import NDArray
 from pandas import DataFrame
 
 from karios.core.configuration import KLTConfiguration
+from karios.core.radiometry import laplacian_to_uint8
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,7 @@ def _pyramid_level(image: NDArray, scale: int, ksize: int) -> NDArray:
         low, high = np.nanpercentile(small, [0.5, 99.5])
         small = np.clip((small - low) / max(high - low, 1e-6) * 255, 0, 255).astype(np.uint8)
 
-    return cv2.Laplacian(small, cv2.CV_8U, ksize=ksize)
+    return laplacian_to_uint8(cv2.Laplacian(small, cv2.CV_32F, ksize=ksize))
 
 
 def _track_level(

@@ -30,7 +30,7 @@ from osgeo import gdal
 from pandas import DataFrame, Series
 
 from karios.core.image import GdalRasterImage, open_gdal_dataset
-from karios.core.radiometry import to_uint8
+from karios.core.radiometry import laplacian_to_uint8, to_uint8
 
 logger = logging.getLogger(__name__)
 
@@ -637,7 +637,7 @@ class ChipService:
         data = dataset.GetRasterBand(1).ReadAsArray(xoff, yoff, self._chip_size, self._chip_size)
         if data is None:
             return
-        lap = cv2.Laplacian(to_uint8(data), cv2.CV_8U, ksize=ksize)
+        lap = laplacian_to_uint8(cv2.Laplacian(to_uint8(data), cv2.CV_32F, ksize=ksize))
         driver = gdal.GetDriverByName("GTiff")
         ds = driver.Create(str(out_path), self._chip_size, self._chip_size, 1, gdal.GDT_Byte)
         ds.GetRasterBand(1).WriteArray(lap)

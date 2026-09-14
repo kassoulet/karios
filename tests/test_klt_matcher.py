@@ -517,8 +517,8 @@ def test_match_tile_auto_ksize_selects_best_inlier_ratio():
         p0.idx = getattr(lap, "ksize_idx", -1)
         return p0
 
-    # Mock cv2.Laplacian to return tagged MagicMocks
-    def mock_laplacian(src, ddepth, ksize):
+    # Mock _laplacian (Laplacian + rescale, as one step) to return tagged MagicMocks
+    def mock_laplacian(arr, ksize):
         lap = MagicMock(spec=np.ndarray)
         lap.ksize_idx = LAPLACIAN_AUTO_CANDIDATES.index(ksize)
         # Mock shape and dtype which might be used
@@ -529,7 +529,7 @@ def test_match_tile_auto_ksize_selects_best_inlier_ratio():
     with (
         patch("karios.matcher.klt.klt_tracker", side_effect=mock_tracker),
         patch("karios.matcher.klt.cv2.goodFeaturesToTrack", side_effect=mock_gftt),
-        patch("karios.matcher.klt.cv2.Laplacian", side_effect=mock_laplacian),
+        patch("karios.matcher.klt._laplacian", side_effect=mock_laplacian),
     ):
         best_result, scores, selected_ksize, _ = klt._match_tile_auto_ksize(
             tile, tile, np.ones((50, 50), dtype=np.uint8)

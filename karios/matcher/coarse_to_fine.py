@@ -60,7 +60,7 @@ _MIN_POINTS_FOR_FIT = 50
 _BACK_THRESHOLD = 0.1
 
 
-def _pyramid_level(image: NDArray, scale: int, ksize: int) -> NDArray:
+def _pyramid_level(image: NDArray, scale: int, ksize: int, laplacian_power: float = 1.0) -> NDArray:
     """Downsample then Laplacian-filter, in that order.
 
     Filtering after downsampling is what makes the coarse levels informative;
@@ -80,7 +80,7 @@ def _pyramid_level(image: NDArray, scale: int, ksize: int) -> NDArray:
         low, high = np.nanpercentile(small, [0.5, 99.5])
         small = np.clip((small - low) / max(high - low, 1e-6) * 255, 0, 255).astype(np.uint8)
 
-    return laplacian_to_uint8(cv2.Laplacian(small, cv2.CV_32F, ksize=ksize))
+    return laplacian_to_uint8(cv2.Laplacian(small, cv2.CV_32F, ksize=ksize), power=laplacian_power)
 
 
 def _track_level(
@@ -148,6 +148,7 @@ def coarse_to_fine_tracker(
     mon_ksize: int,
     ref_ksize: int,
     p0: NDArray | None = None,
+    laplacian_power: float = 1.0,
 ) -> tuple[DataFrame, int] | None:
     """Match two images by descending a pyramid explicitly.
 
@@ -163,6 +164,8 @@ def coarse_to_fine_tracker(
         mon_ksize: Laplacian kernel size for the monitored image
         ref_ksize: Laplacian kernel size for the reference image
         p0 (NDArray | None): optional pre-computed features to track
+        laplacian_power (float): shape of the Laplacian rescale, forwarded to
+            `radiometry.laplacian_to_uint8` at every level. Defaults to 1.
 
     Returns:
         tuple[DataFrame, int] | None: frame of x0, y0, dx, dy, score and the
@@ -170,7 +173,7 @@ def coarse_to_fine_tracker(
     """
     logger.info("Start coarse-to-fine tracking, %s levels", conf.maxLevel)
 
-    ref_full = _pyramid_level(ref_data, 1, ref_ksize)
+    ref_full = _pyramid_level(ref_data, 1, ref_ksize, laplacian_power)
     if p0 is None:
         p0 = cv2.goodFeaturesToTrack(
             ref_full,
@@ -190,8 +193,8 @@ def coarse_to_fine_tracker(
 
     for level in range(conf.maxLevel, -1, -1):
         scale = 2**level
-        ref_level = _pyramid_level(ref_data, scale, ref_ksize)
-        mon_level = _pyramid_level(image_data, scale, mon_ksize)
+        ref_level = _pyramid_level(ref_data, scale, ref_ksize, laplacian_power)
+        mon_level = _pyramid_level(image_data, scale, mon_ksize, laplacian_power)
 
         points = (p0 / scale).astype(np.float32)
         guess = ((p0 + flow[:, None, :]) / scale).astype(np.float32)

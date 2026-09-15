@@ -69,7 +69,11 @@ click.rich_click.OPTION_GROUPS = {
         },
         {
             "name": "Advanced Options",
-            "options": ["--enable-large-shift-detection", "--enable-coarse-to-fine"],
+            "options": [
+                "--enable-large-shift-detection",
+                "--enable-coarse-to-fine",
+                "--laplacian-power",
+            ],
         },
         {
             "name": "Logging Options",
@@ -230,6 +234,17 @@ def cli() -> None:
     is_flag=True,
     help="Match by descending the image pyramid explicitly, keeping key points near data edges",
 )
+@click.option(
+    "--laplacian-power",
+    type=click.FloatRange(0.0, 1.0),
+    default=1.0,
+    help=(
+        "Shape of the Laplacian rescale feeding the KLT tracker: 0 keeps it as-is, "
+        "1 saturates it to a near-binary response (the historical CV_8U behaviour's "
+        "cross-sensor robustness, made explicit and tunable)."
+    ),
+    show_default=True,
+)
 @click.option("--debug", "-d", is_flag=True, help="Enable Debug mode")
 @click.option("--no-log-file", is_flag=True, help="Do not log in file")
 @click.option(
@@ -257,6 +272,7 @@ def process(
     dem_description: Optional[str],
     enable_large_shift_detection: bool,
     enable_coarse_to_fine: bool,
+    laplacian_power: float,
     no_log_file: bool,
     debug: bool,
     log_file_path: str,
@@ -323,6 +339,7 @@ def process(
             enable_coarse_to_fine=enable_coarse_to_fine,
             no_values=list(no_value) if no_value else None,
             debug=debug,
+            laplacian_power=laplacian_power,
         )
 
         # Validate configuration

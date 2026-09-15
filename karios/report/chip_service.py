@@ -394,6 +394,7 @@ class ChipService:
         confident_threshold: float,
         output_dir: str | Path,
         laplacian_ksize: dict[str, int] | None = None,
+        laplacian_power: float = 1.0,
     ):
         """
         This function generates a maximum of 100 chip images of KP for monitored and reference images.
@@ -470,6 +471,7 @@ class ChipService:
                     reference_filename=reference.file_name,
                     laplacian_ksize=laplacian_ksize,
                     out_dir_laplacian=laplacian_dir_path,
+                    laplacian_power=laplacian_power,
                 )
 
         logger.info("Chips generated in %s", chips_dir_path)
@@ -543,6 +545,7 @@ class ChipService:
         reference_filename: str,  # for out folder
         laplacian_ksize: dict[str, int] | None = None,
         out_dir_laplacian: Path | None = None,
+        laplacian_power: float = 1.0,
     ):
         """
         Generate KP chip using gdal translate for monitored and reference dataset in corresponding output dir.
@@ -617,6 +620,7 @@ class ChipService:
                 y0_offset,
                 ref_ksize,
                 out_dir_laplacian / reference_filename / f"REF_{x0}_{y0}.TIFF",
+                laplacian_power,
             )
             self._write_laplacian_chip(
                 monitored,
@@ -624,6 +628,7 @@ class ChipService:
                 y1_offset,
                 mon_ksize,
                 out_dir_laplacian / monitored_filename / f"MON_{x0}_{y0}.TIFF",
+                laplacian_power,
             )
 
     def _write_laplacian_chip(
@@ -633,11 +638,14 @@ class ChipService:
         yoff: int,
         ksize: int,
         out_path: Path,
+        power: float = 1.0,
     ):
         data = dataset.GetRasterBand(1).ReadAsArray(xoff, yoff, self._chip_size, self._chip_size)
         if data is None:
             return
-        lap = laplacian_to_uint8(cv2.Laplacian(to_uint8(data), cv2.CV_32F, ksize=ksize))
+        lap = laplacian_to_uint8(
+            cv2.Laplacian(to_uint8(data), cv2.CV_32F, ksize=ksize), power=power
+        )
         driver = gdal.GetDriverByName("GTiff")
         ds = driver.Create(str(out_path), self._chip_size, self._chip_size, 1, gdal.GDT_Byte)
         ds.GetRasterBand(1).WriteArray(lap)

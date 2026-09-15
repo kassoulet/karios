@@ -126,15 +126,26 @@ def test_laplacian_response_keeps_its_sign():
 
 
 def test_laplacian_outlier_does_not_binarize_the_rest():
-    """A couple of extreme responses must not compress everything else onto
-    0/255 - the failure mode measured on real imagery with CV_8U (~95%+ of
-    pixels at the two extremes)."""
+    """At power=0 (the non-binarized shape), a couple of extreme responses
+    must not compress everything else onto 0/255 - the failure mode measured
+    on real imagery with CV_8U (~95%+ of pixels at the two extremes)."""
+    response = _laplacian_like_response()
+
+    out = laplacian_to_uint8(response, power=0.0)
+
+    near_extreme = np.count_nonzero((out <= 2) | (out >= 253))
+    assert near_extreme / out.size < 0.05
+
+
+def test_laplacian_default_power_is_near_binary():
+    """The default (power=1) deliberately reproduces the old near-binary
+    behaviour's cross-sensor matching robustness."""
     response = _laplacian_like_response()
 
     out = laplacian_to_uint8(response)
 
     near_extreme = np.count_nonzero((out <= 2) | (out >= 253))
-    assert near_extreme / out.size < 0.05
+    assert near_extreme / out.size > 0.9
 
 
 def test_laplacian_is_monotonic():
@@ -152,25 +163,26 @@ def test_laplacian_is_monotonic():
 
 
 def test_laplacian_weak_texture_stays_separable():
-    """Low-contrast regions must not be crushed toward a single value - a
-    percentile-bound sigmoid does exactly that when the tile also contains
-    much stronger edges elsewhere, starving goodFeaturesToTrack of anything
-    to find in the weak region."""
+    """At power=0, low-contrast regions must not be crushed toward a single
+    value - a percentile-bound sigmoid does exactly that when the tile also
+    contains much stronger edges elsewhere, starving goodFeaturesToTrack of
+    anything to find in the weak region."""
     response = np.array([[0.05, 0.1, 0.15, 0.2]], dtype=np.float32)
 
-    out = laplacian_to_uint8(response)
+    out = laplacian_to_uint8(response, power=0.0)
 
     assert len(set(out[0].tolist())) == 4
 
 
-def test_laplacian_narrower_output_percentile_saturates_more():
-    """`output_percentile` calibrates contrast on the asinh output, the same
-    way `to_uint8`'s percentiles calibrate the raw-image stretch - a tighter
-    window must use more of the range, not less."""
+def test_laplacian_narrower_percentile_saturates_more():
+    """At power=0 (so the shaping step doesn't itself already saturate
+    everything), `percentile` calibrates contrast the same way `to_uint8`'s
+    percentiles calibrate the raw-image stretch - a tighter window must use
+    more of the range, not less."""
     response = _laplacian_like_response()
 
-    tight = laplacian_to_uint8(response, output_percentile=60.0)
-    wide = laplacian_to_uint8(response, output_percentile=99.9)
+    tight = laplacian_to_uint8(response, percentile=60.0, power=0.0)
+    wide = laplacian_to_uint8(response, percentile=99.9, power=0.0)
 
     assert tight.std() > wide.std()
 

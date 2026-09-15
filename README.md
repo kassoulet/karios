@@ -276,6 +276,7 @@ karios process monitored.tif reference.tif mask.tif \
 |--------|------|------------|
 | `--enable-large-shift-detection` | FLAG | Enable detection and correction of large pixel shifts. Mutually exclusive with `--enable-coarse-to-fine` |
 | `--enable-coarse-to-fine` | FLAG | Match by descending the image pyramid explicitly, keeping key points near data edges. Mutually exclusive with `--enable-large-shift-detection`, and not compatible with `laplacian_kernel_size: "auto"`. See [KLT param leverage](#maxlevel--coarse-to-fine-matching) |
+| `--laplacian-power` | FLOAT [0.0-1.0] | Shape of the Laplacian rescale feeding the KLT tracker. `0` keeps it as the plain percentile-normalized value; `1` (default) saturates it to a near-binary response, deliberately reproducing the historical behaviour's cross-sensor matching robustness; values in between interpolate via a signed power law. |
 
 #### Logging Options
 
@@ -415,6 +416,7 @@ runtime_config = RuntimeConfiguration(
     enable_large_shift_detection=False,
     no_values=[0, 255],           # Optional: filter out key points with these DN values
     debug=True,                   # Also generate the key point coverage plot (05_coverage.png)
+    laplacian_power=1.0,          # 0 = plain percentile-normalized value, 1 = near-binary (default)
 )
 ```
 

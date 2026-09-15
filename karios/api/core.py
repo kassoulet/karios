@@ -155,6 +155,7 @@ class KariosAPI:
             self._runtime_configuration.output_directory,
             self._runtime_configuration.no_values,
             self._runtime_configuration.enable_coarse_to_fine,
+            laplacian_power=self._runtime_configuration.laplacian_power,
         )
 
         self._zncc_service = ZNCCService()
@@ -422,6 +423,7 @@ class KariosAPI:
             self._processing_configuration.accuracy_analysis_configuration.confidence_threshold,
             self._runtime_configuration.output_directory,
             laplacian_ksize=self._resolve_laplacian_ksize(),
+            laplacian_power=self._runtime_configuration.laplacian_power,
         )
 
     def _resolve_laplacian_ksize(self) -> dict[str, int] | None:

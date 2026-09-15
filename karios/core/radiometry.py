@@ -69,75 +69,64 @@ def to_uint8(arr: NDArray, percentiles: tuple[float, float] = DEFAULT_PERCENTILE
     return np.clip((values - low) / (high - low) * 255.0, 0, 255).astype(np.uint8)
 
 
-def laplacian_to_uint8(
-    response: NDArray, scale_percentile: float = 50.0, output_percentile: float = 98.0
-) -> NDArray:
-    """Rescale a signed Laplacian response to uint8 with a normalized asinh stretch.
+def laplacian_to_uint8(response: NDArray, percentile: float = 98.0, power: float = 1.0) -> NDArray:
+    """Rescale a signed Laplacian response to uint8 with a percentile-normalized power law.
 
     cv2.Laplacian's own CV_8U output clips every negative response to 0 and
     saturates large positive ones at 255 - measured on real imagery, that
-    collapses 95%+ of pixels to the two extremes. A first attempt replaced
-    that with a plain linear rescale, which fixed the sign and the saturation
-    bug but matched worse across sensors than the original - what mattered
-    for accuracy here is not a lower geometric RMSE but a uniform spread of
-    key points over the whole scene, and a linear map gives low-contrast
-    regions almost no separable signal for goodFeaturesToTrack to find
-    corners in. A sigmoid (a second attempt) still saturates every response
-    past its percentile bound to the same handful of output values, so it
-    reproduces the same starvation, just less severely.
+    collapses 95%+ of pixels to the two extremes. That near-binary shape is
+    not pure loss, though: on real multi-sensor pairs it made matching more
+    robust, by discarding each sensor's exact gain/contrast and keeping only
+    "is there a strong edge here". The bugs were that negative responses were
+    discarded rather than mapped symmetrically, and that where the "binary"
+    threshold actually fell was an accident of kernel size and image dtype
+    rather than a deliberate, tunable choice.
 
-    An asinh stretch - the same tool used to display astronomical images
-    where both faint structure and bright outliers must stay visible at once
-    - keeps every distinct input mapped to a distinct output: it has no flat
-    plateau anywhere, only ever-slower (logarithmic) growth for large
-    responses. Weak texture in low-contrast regions stays separable instead
-    of being crushed toward a single value, so those regions can still
-    produce key points; genuine outliers are compressed gracefully rather
-    than either dominating a linear scale or being lumped together at a hard
-    saturation point.
+    This fixes both while keeping the same "how binary" trade-off explicit.
+    The response is first normalized by a percentile of its magnitude - the
+    same idea `to_uint8` already applies to the raw image - so a few extreme
+    pixels don't set the scale for the whole tile, and the sign survives
+    (clip to [-1, 1] rather than [0, 1]). `power` then reshapes that
+    normalized, sign-preserved value with a signed power law - `sign(y) *
+    |y|**exponent`, where `exponent = 1 - power`:
 
-    Two percentiles do two different jobs, both needed:
-
-    - `scale_percentile` (the median by default) sets the asinh's "typical
-      size" for this tile - a robust unit, not a threshold separating
-      "normal" from "outlier": the same smooth function handles both.
-    - `output_percentile` then normalizes asinh's *output* the same way
-      `to_uint8` normalizes the raw image, so the stretch actually uses the
-      available contrast on every tile. A fixed linear gain on the asinh
-      output (an earlier version of this function) left that uncalibrated:
-      how far the compressed response spreads across [0, 255] depended on
-      the ratio between each tile's extreme values and its median, which
-      varies tile to tile and sensor to sensor - some tiles came out
-      washed out, others closer to saturated, an inconsistency that shows up
-      as "the Laplacian doesn't look normalized" on a chip-by-chip
-      inspection. Applying the percentile bound *after* asinh rather than
-      directly on the raw response is what keeps this from reintroducing the
-      original outlier-domination problem: the compression has already
-      happened, so this percentile only calibrates contrast, not survival.
+    - `power=0` (`exponent=1`): the shape is left alone - a plain,
+      percentile-normalized linear value, the "original" (non-binarized)
+      signal.
+    - `power=1` (`exponent=0`): every nonzero-response pixel saturates to
+      +-1 - functionally the old near-binary behaviour, but symmetric and
+      deliberate rather than an artifact of CV_8U's clipping.
+    - values in between smoothly interpolate: lower exponents push weaker
+      edges toward saturation sooner, without discarding the ones that
+      remain below the noise floor (a response of exactly 0 always maps to
+      128, regardless of `power`, since `sign(0) == 0`).
 
     Args:
         response: signed Laplacian response, any real dtype.
-        scale_percentile: percentile of the response magnitude used to set
-            the asinh's scale. Defaults to 50 (the median).
-        output_percentile: percentile of the asinh output's magnitude used to
-            normalize it to uint8. Defaults to 98.
+        percentile: percentile of the response magnitude used to normalize
+            it before shaping. Defaults to 98.
+        power: 0 keeps the percentile-normalized value as a plain linear
+            signal; 1 pushes every nonzero response to full saturation
+            (binary); in between interpolates via a signed power law.
+            Defaults to 1.
 
     Returns:
         NDArray: uint8 array of the same shape, 128 where the response is
             exactly zero.
     """
-    scale = np.percentile(np.abs(response), scale_percentile)
-    if scale <= 0:
-        return np.full(response.shape, 128, dtype=np.uint8)
-
-    y = np.arcsinh(response.astype(np.float64) / scale)
-
-    bound = np.percentile(np.abs(y), output_percentile)
+    bound = np.percentile(np.abs(response), percentile)
     if bound <= 0:
         return np.full(response.shape, 128, dtype=np.uint8)
 
-    # The only clip left is the unavoidable one: fitting into 8 bits. asinh's
-    # own compression means it is reached only by truly extreme responses,
-    # not the top few percent - `bound` calibrates contrast, it is not a
-    # threshold that discards anything beyond it.
-    return np.clip(np.round(y / bound * 127.0 + 128.0), 0, 255).astype(np.uint8)
+    # The only clip left before shaping is the unavoidable one: fitting into
+    # 8 bits eventually. `bound` calibrates contrast, not survival - it is
+    # reached only by the top few percent, not most of the tile.
+    y_norm = np.clip(response.astype(np.float64) / bound, -1.0, 1.0)
+
+    exponent = 1.0 - power
+    if exponent <= 0:
+        shaped = np.sign(y_norm)
+    else:
+        shaped = np.sign(y_norm) * np.abs(y_norm) ** exponent
+
+    return np.clip(np.round(shaped * 127.0 + 128.0), 0, 255).astype(np.uint8)

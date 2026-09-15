@@ -390,6 +390,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             <img src="{ce_plot}" alt="CE Plot">
         </div>
         {dem_plots_html}
+        {coverage_plot_html}
     </div>
 
     <div class="footer">
@@ -822,6 +823,15 @@ class HtmlReportGenerator:
                 </div>"""
             dem_plots_html += "</div>"
 
+        coverage_plot_html = ""
+        if self.report_paths.coverage_plot:
+            coverage_plot_html = f"""
+                <h3>Key Point Coverage (Debug)</h3>
+                <div class="image-container">
+                    <span class="image-title">05 - Density &amp; Quality Coverage</span>
+                    <img src="{Path(self.report_paths.coverage_plot).name}" alt="Coverage Plot">
+                </div>"""
+
         # 1. Generate Summary Page (report.html)
         summary_content = HTML_TEMPLATE.format(
             css_styles=css_styles,
@@ -849,6 +859,7 @@ class HtmlReportGenerator:
             dy_plot=Path(self.report_paths.dy_plot).name,
             ce_plot=Path(self.report_paths.ce_plot).name,
             dem_plots_html=dem_plots_html,
+            coverage_plot_html=coverage_plot_html,
         )
 
         report_file = self.output_dir / "report.html"

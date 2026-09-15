@@ -60,6 +60,10 @@ class RuntimeConfiguration:
                    can be read from input images
         title_prefix: Optional prefix for chart titles (max 26 characters)
         dem_description: Optional DEM source description for plots
+        debug: Whether to also generate the key point density/quality coverage
+                   plot - a higher point count is not by itself evidence of a
+                   good registration, since points can cluster in the most
+                   textured regions and leave the rest of the scene unmatched
     """
 
     output_directory: Union[str, Path]
@@ -72,6 +76,7 @@ class RuntimeConfiguration:
     pixel_size: Optional[float] = None
     title_prefix: Optional[str] = None
     dem_description: Optional[str] = None
+    debug: bool = False
 
     def __post_init__(self):
         if self.enable_large_shift_detection and self.enable_coarse_to_fine:

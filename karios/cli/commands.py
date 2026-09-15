@@ -322,6 +322,7 @@ def process(
             enable_large_shift_detection=enable_large_shift_detection,
             enable_coarse_to_fine=enable_coarse_to_fine,
             no_values=list(no_value) if no_value else None,
+            debug=debug,
         )
 
         # Validate configuration

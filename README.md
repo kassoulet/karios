@@ -413,7 +413,8 @@ runtime_config = RuntimeConfiguration(
     generate_kp_chips=True,      # Enable chip generation
     dem_description="SRTM 30m",   # Optional DEM description for plots
     enable_large_shift_detection=False,
-    no_values=[0, 255]            # Optional: filter out key points with these DN values
+    no_values=[0, 255],           # Optional: filter out key points with these DN values
+    debug=True,                   # Also generate the key point coverage plot (05_coverage.png)
 )
 ```
 
@@ -479,6 +480,16 @@ Plot configuration parameters for `overview`, `shift`, `dem`, and `ce` plots con
 - `fig_size` : Height size of the generated figure in inches, width is 5/3 of the height
 - `ce_scatter_colormap` : matplotlib color map name for the KP shift density scatter plot
 
+#### `plot_configuration.coverage` (Key point coverage plot parameters, `--debug` only)
+- `fig_size` : Height size of the generated figure in inches
+- `grid_size` : number of grid cells along each axis used to bin key points for the
+  density and quality maps
+- `quality_colormap` : matplotlib color map name for the mean-score quality maps
+  (KLT score, ZNCC, NMI)
+- `zncc_threshold` : ZNCC value (conventionally ~0.8) above which a match is considered
+  trustworthy; shown as a contour line on the ZNCC map and as a "% of KP above threshold"
+  figure
+
 ### Outputs
 
 KARIOS generates several types of outputs:
@@ -494,6 +505,15 @@ KARIOS generates several types of outputs:
 - **02_dx.png**: X-direction displacement analysis by row/column
 - **03_dy.png**: Y-direction displacement analysis by row/column  
 - **04_ce.png**: Circular error analysis with statistical summaries
+- **05_coverage.png**: Key point density, plus three independent quality maps (mean KLT
+  score, mean ZNCC, mean NMI - since a KP the tracker is confident about can still be a
+  poor radiometric match), with coverage statistics (empty cell ratio, coefficient of
+  variation) and a per-column overall mean - only with `--debug`. The ZNCC map also shows
+  a dashed contour at `zncc_threshold` (default 0.8) and the share of key points at or
+  above it, since that check is conventionally a statement about individual matches, not
+  a cell average. A high point count is not by itself evidence of a good registration:
+  points can cluster in the most textured regions and leave the rest of the scene
+  unmatched, which the CSV's aggregate statistics cannot reveal on their own.
 - **dem_*.png**: DEM-based altitude analysis (if DEM provided)
 
 #### Products (Optional)

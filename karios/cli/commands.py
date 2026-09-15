@@ -326,6 +326,12 @@ def process(
         output_dir = out / f"{monitored_image.stem}_{reference_image.stem}"
         os.makedirs(output_dir, exist_ok=True)
 
+        # Copy the configuration as soon as we know where results will be
+        # written, so it is there even if processing fails partway through -
+        # useful to know exactly what was attempted. Overwritten below with
+        # resolved "auto" values once/if processing succeeds.
+        shutil.copy(conf, output_dir)
+
         # Create runtime configuration
         runtime_configuration = RuntimeConfiguration(
             output_directory=output_dir,
@@ -353,8 +359,8 @@ def process(
             monitored_image, reference_image, mask_file, dem_file, resume, vector_mask
         )
 
-        # Copy configuration to the output directory. When any klt_matching field was
-        # in "auto" mode, replace it with the resolved value so the output config
+        # When any klt_matching field was in "auto" mode, overwrite the config
+        # already copied above with the resolved value, so the output config
         # reflects what actually ran.
         klt_conf = processing_configuration.klt_configuration
         ksize_resolved = None
@@ -387,8 +393,6 @@ def process(
             out_conf_path = output_dir / Path(conf).name
             with open(out_conf_path, "w", encoding="utf-8") as f:
                 json.dump(conf_data, f, indent=4)
-        else:
-            shutil.copy(conf, output_dir)
 
         logger.info("Processing completed successfully")
         logger.info("Results written to %s", output_dir)

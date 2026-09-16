@@ -183,8 +183,6 @@ class CircularErrorPlot(AbstractPlot):
         # pas = 0.1
 
         v_max = np.max([np.abs(np.max(vect)), np.abs(np.min(vect))])
-        logger.info("value %s", str(2 * v_max))
-        # number_of_bin = int(((2 * v + 1) / pas))
         logger.info(" pixel size                      : %s %s", self._img_res, self._short_unit)
         logger.info(
             " Bin range (%s)                   : [-%s , %s]",

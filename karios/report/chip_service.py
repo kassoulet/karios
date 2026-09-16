@@ -504,7 +504,7 @@ class ChipService:
             tiff_files = glob.glob("*.TIFF")
 
             if not tiff_files:
-                print(f"No TIFF files found in {directory_path}")
+                logger.warning("No TIFF files found in %s", directory_path)
                 return
 
             # Sort files for consistent ordering
@@ -520,8 +520,15 @@ class ChipService:
                 VRTNodata=0,  # False for mosaic (single band)
             )
 
-            # Create the VRT
-            vrt_ds = gdal.BuildVRT(output_vrt_name, tiff_files, options=vrt_options)
+            # Create the VRT. Chips are plain pixel crops with no geotransform
+            # of their own, so GDAL warns "does not support ungeoreferenced
+            # image" once per file - expected here, not actionable, and would
+            # otherwise flood the log with one line per chip.
+            gdal.PushErrorHandler("CPLQuietErrorHandler")
+            try:
+                vrt_ds = gdal.BuildVRT(output_vrt_name, tiff_files, options=vrt_options)
+            finally:
+                gdal.PopErrorHandler()
 
             if vrt_ds is not None:
                 # Close the dataset

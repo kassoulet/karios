@@ -19,6 +19,8 @@
 
 """logging config module."""
 
+from __future__ import annotations
+
 import logging
 import logging.config
 import time

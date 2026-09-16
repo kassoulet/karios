@@ -32,6 +32,8 @@ therefore inherits a sane starting guess from its neighbours, and only the
 finest level's `winSize / 2` band is lost.
 """
 
+from __future__ import annotations
+
 import logging
 
 import cv2

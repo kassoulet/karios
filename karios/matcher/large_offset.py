@@ -17,6 +17,8 @@
 # limitations under the License.
 """Modules for large offset matcher"""
 
+from __future__ import annotations
+
 from skimage.registration import phase_cross_correlation
 
 from karios.core.image import GdalRasterImage

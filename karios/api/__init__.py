@@ -17,4 +17,6 @@
 # limitations under the License.
 """KARIOS API package."""
 
+from __future__ import annotations
+
 from karios.api.core import KariosAPI, RuntimeConfiguration

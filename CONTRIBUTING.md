@@ -28,8 +28,9 @@ It installs:
 - `pre-commit`: pre commit hook engine : https://pre-commit.com/
 - `setuptools` : for packaging
 - `vermin`: detects the minimum Python version required by the code's actual syntax, checked
-  in CI against 3.8 (non-blocking: `karios/` currently needs 3.9+ regardless of the
-  `requires-python` declared in `pyproject.toml`)
+  in CI against 3.9 (matches `requires-python` in `pyproject.toml`). Every module defers its
+  annotations via `from __future__ import annotations`, so this only guards against new code
+  using a runtime (non-annotation) construct newer than 3.9 - keep that import when adding files
 
 ### Deploy pre-commit hook
 

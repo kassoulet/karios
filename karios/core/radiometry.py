@@ -33,6 +33,8 @@ finite pixels instead costs a little contrast and is indifferent to how extreme
 the outliers are.
 """
 
+from __future__ import annotations
+
 import numpy as np
 from numpy.typing import NDArray
 

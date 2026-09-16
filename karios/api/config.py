@@ -29,6 +29,8 @@ The configuration covers:
 - Visualization options (title prefixes, DEM descriptions)
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union

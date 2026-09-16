@@ -17,6 +17,8 @@
 # limitations under the License.
 """Module to generate KP chip images of monitored and reference images."""
 
+from __future__ import annotations
+
 import glob
 import logging
 import os

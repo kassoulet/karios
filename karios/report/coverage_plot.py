@@ -29,6 +29,8 @@ statistics (empty cell ratio, coefficient of variation of the per-cell
 count) that quantify how uniform the coverage actually is.
 """
 
+from __future__ import annotations
+
 import logging
 
 import numpy as np

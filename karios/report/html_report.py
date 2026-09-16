@@ -17,6 +17,8 @@
 # limitations under the License.
 """Module to generate HTML reports for KARIOS results."""
 
+from __future__ import annotations
+
 import base64
 import datetime
 import logging

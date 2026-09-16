@@ -17,6 +17,8 @@
 # limitations under the License.
 """circular error plot module"""
 
+from __future__ import annotations
+
 import logging
 
 import numpy as np

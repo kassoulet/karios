@@ -22,6 +22,8 @@ Represents the configuration of the application.
 Contains inputs, outputs and processings parameters.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os

@@ -17,6 +17,8 @@
 # limitations under the License.
 """Module to plot images, radial error and theta error"""
 
+from __future__ import annotations
+
 import logging
 
 import numpy as np

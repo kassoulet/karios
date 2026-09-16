@@ -17,6 +17,4 @@
 # limitations under the License.
 """KARIOS CLI package."""
 
-from __future__ import annotations
-
 from karios.cli.commands import cli

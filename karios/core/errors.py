@@ -19,8 +19,6 @@
 
 """Error/Exceptions classes modules."""
 
-from __future__ import annotations
-
 
 class KariosException(Exception):
     """Base class for KARIOS exception."""

@@ -27,6 +27,9 @@ It installs:
 - `pycodestyle`: check docstring
 - `pre-commit`: pre commit hook engine : https://pre-commit.com/
 - `setuptools` : for packaging
+- `vermin`: detects the minimum Python version required by the code's actual syntax, checked
+  in CI against 3.8 (non-blocking: `karios/` currently needs 3.9+ regardless of the
+  `requires-python` declared in `pyproject.toml`)
 
 ### Deploy pre-commit hook
 

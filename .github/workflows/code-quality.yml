@@ -34,7 +34,7 @@ jobs:
         pip install -e .
         pip install -r requirements_dev.txt
         # Install tools needed for pre-commit checks
-        pip install black isort bandit pydocstyle pre-commit
+        pip install black isort bandit pydocstyle pre-commit vermin
 
     - name: Run license headers check
       run: |
@@ -54,3 +54,15 @@ jobs:
     - name: Run security check (bandit)
       run: |
         bandit .
+
+    - name: Check Python 3.8+ syntax compatibility (vermin)
+      run: |
+        # --eval-annotations actually inspects type-hint syntax (PEP 585
+        # builtin generics, PEP 604 unions) instead of vermin's lenient
+        # default, which would otherwise pass without noticing them.
+        # This currently fails: the package uses 3.9+ syntax throughout and
+        # declares requires-python >=3.12 in pyproject.toml. Kept as a
+        # non-blocking signal of the gap rather than gating merges on a
+        # 3.8-compatibility effort nobody has undertaken yet.
+        vermin --eval-annotations --target=3.8 --violations --no-tips karios/
+      continue-on-error: true

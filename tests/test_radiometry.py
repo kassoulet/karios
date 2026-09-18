@@ -201,6 +201,20 @@ def test_laplacian_output_is_scale_invariant():
     assert np.array_equal(out_small, out_large)
 
 
+def test_laplacian_sparse_edges_on_a_mostly_flat_tile_are_not_discarded():
+    """A tile that is flat almost everywhere, with a small sharp feature,
+    must still saturate that feature - not fall back to uniform gray just
+    because the response is zero at the default 98th percentile."""
+    response = np.zeros((64, 64), dtype=np.float32)
+    response[10, 10] = 5.0
+    response[10, 11] = -5.0
+
+    out = laplacian_to_uint8(response)
+
+    assert out[10, 10] > 128
+    assert out[10, 11] < 128
+
+
 def test_laplacian_uniform_nonzero_response_does_not_divide_by_zero():
     """A perfectly uniform response has itself as the median magnitude
     (ratio 1), so it must produce a finite, sensible constant rather than

@@ -116,7 +116,15 @@ def laplacian_to_uint8(response: NDArray, percentile: float = 98.0, power: float
         NDArray: uint8 array of the same shape, 128 where the response is
             exactly zero.
     """
-    bound = np.percentile(np.abs(response), percentile)
+    abs_response = np.abs(response)
+    bound = np.percentile(abs_response, percentile)
+    if bound <= 0:
+        # Fewer than `100 - percentile`% of pixels carry any response at all -
+        # common on tiles that are mostly flat with only a small, sharp
+        # feature (a handful of edge pixels among a uniform background).
+        # Falling back to the actual maximum still normalizes into (-1, 1]
+        # instead of discarding those real edges as if the tile had none.
+        bound = abs_response.max()
     if bound <= 0:
         return np.full(response.shape, 128, dtype=np.uint8)
 

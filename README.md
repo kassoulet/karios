@@ -29,7 +29,7 @@ Install `karios_qgis-<version>.zip` from the GitHub release (**Plugins → Manag
 At first start the plugin downloads the dependency bundle matching your platform and Python
 (`deps-<platform>-cpXY.zip`: OpenCV, pandas, scikit-image...), checks its sha256 against `deps-sha256.txt`
 and unpacks it into the plugin folder. Offline: put the bundle file in the plugin folder (do not unzip it).
-NumPy, SciPy, Matplotlib and GDAL come from QGIS. Maintainers: `tools/build_zip.py` builds the bundles and the
+No bundle for macOS on Apple Silicon yet: install OpenCV, pandas and scikit-image by hand there. NumPy, SciPy, Matplotlib and GDAL come from QGIS. Maintainers: `tools/build_zip.py` builds the bundles and the
 zip (see `.github/workflows/release.yml`; tag `v<version>`).
 
 ### Option 1: Using the Install Script

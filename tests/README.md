@@ -1,288 +1,50 @@
-# KARIOS QGIS Plugin - Automated Testing
+# Tests
 
-## Quick Start
+Install and run tests, run headless with QGIS's Python (`QT_QPA_PLATFORM=offscreen` is set by the scripts).
 
-### Run Tests Locally
+| Script | Checks |
+|---|---|
+| `test_install.py` | the plugin starts like in QGIS (`initGui`), gets its dependencies (OpenCV, pandas, scikit-image), registers the `karios` provider with the `karios_processing` algorithm |
+| `test_algorithms.py [DATA_DIR]` | **runs the KARIOS processing** on the sample images of the `karios` submodule (`karios/tests/end_to_end/test_data`) and compares CE90, RMSE and the number of key points with reference values (10 %), then checks the output files |
+| `check_zip.py ZIP...` | layout and `metadata.txt` of a plugin zip |
+| `check_bundle_imports.py PACK...` | dependency packs import under the running Python (no QGIS) |
+
+`plugin_env.py` is the shared start-up code. Both QGIS tests read:
+
+- `KARIOS_PLUGIN_PARENT`: folder that contains the `karios_qgis` plugin folder to test. Unset: the source tree.
+- `KARIOS_PACK_BASE_URL`: where the plugin downloads its dependency pack (CI serves the packs on `http://127.0.0.1:18431`; plain http is accepted on loopback only).
+
+## Source tree
+
+In a QGIS Python environment that already has OpenCV, pandas and scikit-image (`git submodule update --init` first):
 
 ```bash
-# Test plugin imports and setup
 python tests/test_install.py
-
-# Test dependencies functionality
-python tests/test_dependencies.py
+python tests/test_algorithms.py
 ```
 
-### Run Tests in Docker (Linux)
+## Release zip, as CI does
 
 ```bash
-# Test with latest QGIS
-docker run --rm -v $(pwd):/workspace qgis/qgis:latest \
-  python3 /workspace/tests/test_install.py
-
-# Test with specific QGIS version
-docker run --rm -v $(pwd):/workspace qgis/qgis:release-3_34 \
-  python3 /workspace/tests/test_install.py
+python tools/build_zip.py packs packs linux-x64 3.12 manylinux2014_x86_64 manylinux_2_28_x86_64
+python tools/build_zip.py plugin out/karios_qgis.zip packs
+python tests/check_zip.py out/karios_qgis.zip
+mkdir unzipped && python -c "import zipfile; zipfile.ZipFile('out/karios_qgis.zip').extractall('unzipped')"
+python -m http.server 18431 --bind 127.0.0.1 --directory packs &
+KARIOS_PLUGIN_PARENT=$PWD/unzipped KARIOS_PACK_BASE_URL=http://127.0.0.1:18431 python tests/test_install.py
+KARIOS_PLUGIN_PARENT=$PWD/unzipped KARIOS_PACK_BASE_URL=http://127.0.0.1:18431 python tests/test_algorithms.py
 ```
 
-## CI/CD Automation
+With `KARIOS_PLUGIN_PARENT` set, the tests fail unless OpenCV and scikit-image are imported from the zip's `dependencies/` folder:
+use an environment without them.
 
-Tests run automatically on:
-- ✓ Every push to `main` or `develop` branches
-- ✓ Every pull request
-- ✓ Manual trigger via GitHub Actions UI
+## Is the plugin I installed working?
 
-### GitHub Actions
-
-Workflows located in `.github/workflows/`:
-
-| Workflow | Platform | QGIS Versions |
-|----------|----------|---------------|
-| `test-linux.yml` | Ubuntu (Docker) | 3.28, 3.34, latest |
-| `test-windows.yml` | Windows 2022 | Latest |
-| `test-macos.yml` | macOS 13 | Latest |
-| `test-all.yml` | All platforms | Matrix |
-
-## Test Coverage
-
-### Installation Tests (`tests/test_install.py`)
-
-1. **Plugin Import** - Can import `karios_qgis` module
-2. **Dependency Checker** - Can import and use dependency checker
-3. **Auto-Install Setup** - Plugin has dependencies defined
-4. **Site-Packages** - Target folder exists or can be created
-5. **Dependencies Status** - Check what's installed vs needs install
-
-### Dependency Tests (`tests/test_dependencies.py`)
-
-1. **OpenCV** - Image processing operations
-2. **NumPy** - Array and matrix operations
-3. **scikit-image** - Image filters and features
-4. **pandas** - DataFrame operations
-5. **All Imports** - Verify all modules can be imported
-
-## Test Output
-
-### Success Example
-
-```
-╔══════════════════════════════════════════════════════════╗
-║               KARIOS Plugin Tests                        ║
-╚══════════════════════════════════════════════════════════╝
-
-============================================================
-Test 1: Plugin Imports
-============================================================
-✓ Plugin module imported successfully
-
-============================================================
-Test 2: Dependency Checker
-============================================================
-✓ Dependency checker imported successfully
-✓ Dependency checker works
-
-...
-
-============================================================
-Test Summary
-============================================================
-✓ PASS: Plugin Import
-✓ PASS: Dependency Checker
-✓ PASS: Auto-Install Setup
-✓ PASS: Site-Packages
-✓ PASS: Dependencies
-
-Passed: 5/5
-
-╔══════════════════════════════════════════════════════════╗
-║                  ALL TESTS PASSED                        ║
-╚══════════════════════════════════════════════════════════╝
-```
-
-### Failure Example
-
-```
-============================================================
-Test Summary
-============================================================
-✓ PASS: Plugin Import
-✗ FAIL: Dependency Checker
-✓ PASS: Auto-Install Setup
-✓ PASS: Site-Packages
-✓ PASS: Dependencies
-
-Passed: 4/5
-
-╔══════════════════════════════════════════════════════════╗
-║                  SOME TESTS FAILED                       ║
-╚══════════════════════════════════════════════════════════╝
-```
-
-## GitHub Actions Integration
-
-### Add Badge to README
-
-```markdown
-[![Test All Platforms](https://github.com/your-org/karios-qgis/actions/workflows/test-all.yml/badge.svg)](https://github.com/your-org/karios-qgis/actions/workflows/test-all.yml)
-```
-
-### Enable Workflows
-
-1. Push `.github/workflows/` to repository
-2. Go to GitHub > Actions tab
-3. Enable workflows if needed
-4. Workflows run automatically on next push
-
-### View Results
-
-1. Go to GitHub repository
-2. Click "Actions" tab
-3. Select workflow run
-4. View logs and test output
-
-## Manual Testing Checklist
-
-### Before Release
-
-- [ ] Run tests on Linux (Docker)
-- [ ] Run tests on Windows
-- [ ] Run tests on macOS
-- [ ] Test auto-install with missing dependencies
-- [ ] Test with all dependencies pre-installed
-- [ ] Test with slow network connection
-- [ ] Test offline installation (site-packages folder)
-
-### After Installation
-
-- [ ] Plugin loads without errors
-- [ ] All dependencies installed
-- [ ] Processing algorithms available
-- [ ] KARIOS processing runs successfully
-
-## Troubleshooting
-
-### Test Fails on Import
-
-**Error:** `ModuleNotFoundError: No module named 'qgis'`
-
-**Solution:** Run tests in QGIS environment:
-```bash
-# Docker
-docker run --rm -v $(pwd):/workspace qgis/qgis:latest python3 tests/test_install.py
-
-# Or with QGIS Python
-/path/to/qgis/python.exe tests/test_install.py
-```
-
-### Test Fails on Dependencies
-
-**Error:** `ImportError: No module named 'cv2'`
-
-**Solution:** Dependencies will auto-install when plugin loads. Or manually:
-```bash
-python -m pip install --target site-packages \
-  opencv-python-headless \
-  numpy \
-  scikit-image \
-  pandas
-```
-
-### Docker Permission Denied
-
-**Error:** `Permission denied while trying to connect to Docker daemon`
-
-**Solution:** Add user to docker group:
-```bash
-sudo usermod -aG docker $USER
-newgrp docker
-```
-
-## Continuous Integration
-
-### Automated Testing
-
-```yaml
-# .github/workflows/test-all.yml
-name: Test All Platforms
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
-```
-
-### Automated Releases
-
-```yaml
-# .github/workflows/release.yml
-name: Release
-
-on:
-  push:
-    tags:
-      - 'v*'
-
-jobs:
-  test:
-    uses: ./.github/workflows/test-all.yml
-  
-  deploy:
-    needs: test
-    # ... deployment steps
-```
-
-## Test Reports
-
-### Generate Coverage Report
+Run the processing test against the plugin in your QGIS profile (**Settings → User Profiles → Open Active Profile Folder**,
+then `python/plugins`), with the Python of QGIS (OSGeo4W Shell on Windows):
 
 ```bash
-# Install pytest-cov
-pip install pytest-cov
-
-# Run tests with coverage
-pytest --cov=karios_qgis --cov-report=html
-
-# Open in browser
-firefox htmlcov/index.html
+KARIOS_PLUGIN_PARENT=<profile>/python/plugins python tests/test_algorithms.py <folder with the two sample .tif>
 ```
 
-### Upload to Coverage Service
-
-```yaml
-- name: Upload coverage
-  uses: codecov/codecov-action@v3
-  with:
-    files: ./coverage.xml
-    flags: unittests
-```
-
-## Summary
-
-### What's Tested
-
-✓ Plugin imports correctly  
-✓ Dependency checker works  
-✓ Auto-install mechanism  
-✓ Site-packages folder creation  
-✓ All dependencies functional  
-
-### Where Tests Run
-
-✓ GitHub Actions (Linux, Windows, macOS)  
-✓ Local Docker containers  
-✓ Developer machines  
-
-### When Tests Run
-
-✓ Every commit  
-✓ Every pull request  
-✓ Before releases  
-✓ On demand  
-
-### Test Results
-
-- **Green checkmark** ✓ - All tests passed
-- **Red X** ✗ - Some tests failed
-- **Yellow circle** ⚠ - Warnings but tests passed
-
-View results at: https://github.com/your-org/karios-qgis/actions
+Without the sample images, use any two rasters in QGIS: Processing Toolbox → KARIOS → KARIOS Processing.

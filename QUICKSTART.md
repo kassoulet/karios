@@ -1,3 +1,5 @@
+> **Outdated**: describes the former pip-based installation. See the README and tests/README.md.
+
 # KARIOS QGIS Plugin - Quick Start
 
 ## Installation

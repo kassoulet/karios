@@ -13,3 +13,8 @@ This file is generated. Run:
 Or for PyQt6:
     pyrcc6 -o resources.py resources.qrc
 """
+
+import os
+
+#: Absolute path to the plugin icon, usable directly with QIcon().
+ICON_PATH = os.path.join(os.path.dirname(__file__), 'tpz.png')

@@ -1,6 +1,6 @@
 [general]
 name=KARIOS Processing
-qgisMinimumVersion=3.28
+qgisMinimumVersion=3.38
 description=Apply KARIOS processing to raster images for geometric accuracy analysis using KLT-based image matching
 version=1.0.0
 author=KARIOS QGIS Plugin
@@ -27,3 +27,4 @@ category=Analysis
 icon=resources/tpz.png
 experimental=False
 deprecated=False
+qgisMaximumVersion=4.99

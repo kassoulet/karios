@@ -17,11 +17,20 @@ A QGIS plugin that integrates [KARIOS](https://github.com/telespazio-tim/karios)
 
 ## Requirements
 
-- QGIS 3.28 or later
+- QGIS 3.38 or later (QGIS 4 supported)
 - Python 3.8 or later
 - KARIOS library (included as git submodule)
 
 ## Installation
+
+### Option 0: Released zip (recommended)
+
+Install `karios_qgis-<version>.zip` from the GitHub release (**Plugins → Manage and Install Plugins → Install from ZIP**).
+At first start the plugin downloads the dependency bundle matching your platform and Python
+(`deps-<platform>-cpXY.zip`: OpenCV, pandas, scikit-image...), checks its sha256 against `deps-sha256.txt`
+and unpacks it into the plugin folder. Offline: put the bundle file in the plugin folder (do not unzip it).
+NumPy, SciPy, Matplotlib and GDAL come from QGIS. Maintainers: `tools/build_zip.py` builds the bundles and the
+zip (see `.github/workflows/release.yml`; tag `v<version>`).
 
 ### Option 1: Using the Install Script
 
@@ -67,9 +76,10 @@ python install_plugin.py
    - Find "KARIOS Processing" in the Installed tab
    - Check the box to enable it
 
-### Installing KARIOS Dependencies
+### Installing dependencies (source installs only)
 
-The plugin includes KARIOS as a submodule, but you need to install its Python dependencies:
+The released zip (Option 0) brings its dependencies; Options 1 and 2 do not. In the Python of QGIS, install
+OpenCV, pandas and scikit-image (`pip install -r bundle-requirements.txt scipy`), or:
 
 ```bash
 cd karios
@@ -164,7 +174,11 @@ karios-qgis/
 ├── __init__.py              # Plugin initialization
 ├── karios_qgis.py           # Main plugin class
 ├── metadata.txt             # Plugin metadata
-├── install_plugin.py        # Installation script
+├── dependency_checker.py    # Gets the dependency pack at first run
+├── bundle-requirements.txt  # What the dependency packs contain
+├── install_plugin.py        # Installation script (from source)
+├── tools/build_zip.py       # Builds the dependency packs and the release zip
+├── tests/                   # Install / run tests (see tests/README.md)
 ├── processing/
 │   ├── __init__.py
 │   └── karios_algorithm.py  # Processing algorithm
@@ -185,6 +199,22 @@ pyrcc6 -o resources/resources.py resources/resources.qrc
 # Install to QGIS
 python install_plugin.py
 ```
+
+### Releasing
+
+Bump `version=` in `metadata.txt`, then push the tag `v<version>`. The `install-tests` workflow builds the
+dependency packs (Linux, Windows, macOS arm64/Intel, Python 3.9-3.14) and the plugin zip, tests the zip, and
+only then creates the GitHub release with the zip and the packs (the plugin downloads its pack from the release
+whose tag is its own version). Build locally: `python tools/build_zip.py packs ...` then `plugin ...`
+(usage at the top of the script).
+
+### Testing
+
+The `install-tests` workflow (every push and pull request) checks the zip layout, that every dependency pack
+imports on its OS and Python, and, on conda-forge QGIS 3 and 4 for Linux, Windows and macOS plus apt QGIS on
+Ubuntu, that the plugin zip installs (OpenCV and scikit-image taken from the pack, not from the environment)
+and **runs the KARIOS processing** on the sample images. Run the same checks by hand: see [tests/README.md](tests/README.md),
+including how to test a plugin installed in your own QGIS.
 
 ### Debugging
 

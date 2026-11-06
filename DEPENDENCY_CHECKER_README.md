@@ -1,3 +1,5 @@
+> **Outdated**: describes the former pip-based installation. See the README and tests/README.md.
+
 # Dependency Checker Module
 
 A reusable, cross-platform Python module to check and install dependencies with a Qt dialog for QGIS plugins.

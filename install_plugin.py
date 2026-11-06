@@ -79,20 +79,18 @@ def install_plugin(plugin_dir, target_dir):
     # Create target directory if it doesn't exist
     os.makedirs(target_dir, exist_ok=True)
 
-    # Clean up old incompatible dependencies folders
-    old_deps_path = os.path.join(target_path, 'dependencies')
-    old_site_packages_path = os.path.join(target_path, 'site-packages')
-    if os.path.exists(old_deps_path):
-        print(f"Removing old dependencies folder: {old_deps_path}")
-        shutil.rmtree(old_deps_path)
-    if os.path.exists(old_site_packages_path):
-        print(f"Removing old site-packages folder: {old_site_packages_path}")
-        shutil.rmtree(old_site_packages_path)
-    
-    # Remove existing installation if present
-    # if os.path.exists(target_path):
-    #     print(f"Removing existing installation at {target_path}...")
-    #     shutil.rmtree(target_path)
+    # Remove any existing installation so that files deleted from the source
+    # (stale modules, old dependencies/ and site-packages/ folders) do not
+    # linger in the target and get imported instead of the current ones.
+    if os.path.islink(target_path):
+        print(f"Removing existing symlink at {target_path}...")
+        os.unlink(target_path)
+    elif os.path.isdir(target_path):
+        print(f"Removing existing installation at {target_path}...")
+        shutil.rmtree(target_path)
+    elif os.path.exists(target_path):
+        print(f"✗ Error: {target_path} exists but is not a directory.")
+        return None
     
     # Copy plugin files (excluding .git directories and build artifacts)
     print(f"Installing plugin to {target_path}...")
@@ -103,7 +101,7 @@ def install_plugin(plugin_dir, target_dir):
         '.qwen', '*.md', 'install_plugin.py'
     )
     
-    shutil.copytree(plugin_dir, target_path, ignore=ignore_patterns, dirs_exist_ok=True)
+    shutil.copytree(plugin_dir, target_path, ignore=ignore_patterns)
     print("✓ Plugin installed successfully")
     
     return target_path
@@ -149,7 +147,8 @@ def main():
     target_dir = args.qgis_plugin_dir or get_default_qgis_plugin_dir()
     print(f"Target QGIS plugins directory: {target_dir}")
     
-    install_plugin(plugin_dir, target_dir)
+    if install_plugin(plugin_dir, target_dir) is None:
+        return 1
     
     print("=" * 60)
     print("Installation complete!")
@@ -160,14 +159,12 @@ def main():
     print("3. Find 'KARIOS Processing' in the Installed tab")
     print("4. Enable the plugin if not already enabled")
     print("5. Access via Processing Toolbox > KARIOS > KARIOS Processing")
-    print("\nNote: Make sure you have the required dependencies installed:")
-    print("  - karios library (included as submodule)")
-    print("  - OpenCV")
-    print("  - NumPy, SciPy")
-    print("\nFor development, you may need to install karios in editable mode:")
-    print(f"  cd {os.path.join(plugin_dir, 'karios')}")
-    print("  pip install -e .")
+    print("\nNote: a plugin installed from source does not get its dependencies automatically")
+    print("(that only works with the released zip, see bundle-requirements.txt). Install them")
+    print("in the Python of QGIS: pip install -r bundle-requirements.txt scipy")
+
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())

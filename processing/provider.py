@@ -16,6 +16,7 @@ from qgis.PyQt.QtCore import QCoreApplication
 from qgis.PyQt.QtGui import QIcon
 
 from .karios_algorithm import KariosAlgorithm
+from ..resources import ICON_PATH
 
 
 class KariosProvider(QgsProcessingProvider):
@@ -57,7 +58,7 @@ class KariosProvider(QgsProcessingProvider):
         """
         Returns the provider icon.
         """
-        return QIcon(':/icons/tpz.png')
+        return QIcon(ICON_PATH)
 
     def loadAlgorithms(self):
         """

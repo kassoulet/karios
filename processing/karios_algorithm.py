@@ -18,6 +18,7 @@ import json
 from pathlib import Path
 
 from qgis.core import (
+    Qgis,
     QgsProcessing,
     QgsProcessingAlgorithm,
     QgsProcessingParameterRasterLayer,
@@ -76,7 +77,13 @@ class KariosAlgorithm(QgsProcessingAlgorithm):
     def icon(self):
         """Return the algorithm icon."""
         from qgis.PyQt.QtGui import QIcon
-        return QIcon(':/icons/tpz.png')
+
+        from ..resources import ICON_PATH
+        return QIcon(ICON_PATH)
+
+    def flags(self):
+        """Run on the main thread: numpy/OpenCV can overflow the small stack of Qt pool threads (seen on macOS)."""
+        return super().flags() | Qgis.ProcessingAlgorithmFlag.NoThreading
 
     def name(self):
         """Return the algorithm name."""
@@ -150,7 +157,7 @@ class KariosAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterFile(
                 self.INPUT_MASK,
                 self.tr('Mask File (optional)'),
-                QgsProcessingParameterFile.File,
+                Qgis.ProcessingFileParameterBehavior.File,
                 optional=True,
                 fileFilter='Raster files (*.tif *.tiff *.img)'
             )
@@ -160,7 +167,7 @@ class KariosAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterFile(
                 self.INPUT_DEM,
                 self.tr('DEM File (optional)'),
-                QgsProcessingParameterFile.File,
+                Qgis.ProcessingFileParameterBehavior.File,
                 optional=True,
                 fileFilter='Raster files (*.tif *.tiff *.img)'
             )
@@ -170,7 +177,7 @@ class KariosAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterFile(
                 self.CONFIG_FILE,
                 self.tr('Configuration File (optional)'),
-                QgsProcessingParameterFile.File,
+                Qgis.ProcessingFileParameterBehavior.File,
                 optional=True,
                 fileFilter='JSON files (*.json)'
             )
@@ -181,7 +188,7 @@ class KariosAlgorithm(QgsProcessingAlgorithm):
             QgsProcessingParameterNumber(
                 self.PIXEL_SIZE,
                 self.tr('Pixel Size (meters)'),
-                QgsProcessingParameterNumber.Double,
+                Qgis.ProcessingNumberParameterType.Double,
                 defaultValue=10.0,
                 optional=True
             )
@@ -394,9 +401,12 @@ class KariosAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo('=' * 50)
         
         # Prepare outputs
-        csv_file = reports.key_points_csv if hasattr(reports, 'key_points_csv') else ''
-        geojson_file = reports.key_points_geojson if hasattr(reports, 'key_points_geojson') else ''
-        
+        from karios.core.utils import get_filename
+        csv_path = Path(output_dir) / f"KLT_matcher_{get_filename(monitored_path)}_{get_filename(reference_path)}.csv"
+        csv_file = str(csv_path) if csv_path.exists() else ''
+        # only written when the reference image has a projection
+        geojson_file = next((p for p in reports.products if p.endswith('kp_delta.json')), '')
+
         return {
             self.OUTPUT_CSV: csv_file,
             self.OUTPUT_GEOJSON: geojson_file,

@@ -25,13 +25,11 @@ from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtWidgets import QAction
 
 # Import the processing provider
-from processing.provider import KariosProvider
+from .processing.provider import KariosProvider
 
 # Import dependency checker
-from dependency_checker import (
-    DependencyChecker,
+from .dependency_checker import (
     DependencyInfo,
-    check_and_install_dependencies,
     BackgroundDependencyChecker,
 )
 
@@ -138,8 +136,8 @@ class KariosQGISPlugin:
             logger.debug("Provider reference initialized")
 
             # Define plugin dependencies
-            # Note: QGIS provides numpy - mark as installable=False
-            # scipy, scikit-image, pandas and opencv-python need to be installed
+            # numpy, scipy, matplotlib and GDAL come with QGIS; OpenCV, pandas and scikit-image
+            # (and their dependencies) come from the dependency bundle (bundle-requirements.txt)
             self.dependencies = [
                 DependencyInfo(
                     name="OpenCV",
@@ -147,41 +145,39 @@ class KariosQGISPlugin:
                     package="opencv-python-headless",  # Headless for QGIS/server
                     min_version="4.0.0",
                     optional=False,
-                    installable=True,  # Can be installed via pip
                 ),
-                # pandas is NOT provided by QGIS - needs to be installed
                 DependencyInfo(
                     name="pandas",
                     import_name="pandas",
                     package="pandas",
                     min_version="1.3.0",
                     optional=False,
-                    installable=True,  # Needs pip install
                 ),
-                # scipy is NOT provided by QGIS - needs to be installed
                 DependencyInfo(
                     name="SciPy",
                     import_name="scipy",
                     min_version="1.7.0",
                     optional=False,
-                    installable=True,  # Needs pip install
                 ),
-                # scikit-image is NOT provided by QGIS - needs to be installed
                 DependencyInfo(
                     name="scikit-image",
                     import_name="skimage",
                     package="scikit-image",
                     min_version="0.19.0",
                     optional=False,
-                    installable=True,  # Needs pip install
                 ),
-                # NumPy is provided by QGIS, just check it's available
+                # Provided by QGIS, just check they are available
                 DependencyInfo(
                     name="NumPy",
                     import_name="numpy",
                     min_version="1.20.0",
                     optional=False,
-                    installable=False,  # Provided by QGIS, don't install
+                ),
+                DependencyInfo(name="GDAL", import_name="osgeo"),
+                DependencyInfo(
+                    name="Matplotlib",
+                    import_name="matplotlib",
+                    min_version="3.4.0",
                 ),
             ]
             logger.debug(f"Dependencies defined: {len(self.dependencies)} packages")

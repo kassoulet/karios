@@ -14,12 +14,123 @@ License: GPL-3.0
 
 import importlib
 import importlib.util
+import ipaddress
 import logging
+import hashlib
 import os
+import platform
 import re
-import subprocess
 import sys
+import tempfile
+import urllib.parse
+import urllib.request
+import zipfile
 from typing import Dict, List, Optional, Tuple, Callable, Any
+
+
+# Prebuilt wheel packs (OpenCV, pandas, scikit-image and friends) attached to the GitHub release of each version,
+# one per platform and Python: deps-<platform>-cpXY.zip. Their sha256 ships inside the plugin zip
+# (deps-sha256.txt), so a pack is only unpacked if it is the one this plugin version was released with.
+PACK_BASE_URL = "https://github.com/kassoulet/karios/releases/download/v{version}"
+
+
+def platform_id() -> str:
+    """Platform part of the wheel pack name."""
+    if sys.platform.startswith("win"):
+        return "win-x64"
+    if sys.platform == "darwin":
+        return "macos-arm64" if platform.machine().lower() in ("arm64", "aarch64") else "macos-x64"
+    return "linux-x64"  # ponytail: no linux-arm64 bundle yet; add it to the packs job when needed
+
+
+def pack_name() -> str:
+    return f"deps-{platform_id()}-cp{sys.version_info.major}{sys.version_info.minor}.zip"
+
+
+def _is_loopback(host: Optional[str]) -> bool:
+    """True for localhost / 127.0.0.0/8 / ::1, the only hosts allowed over plain http."""
+    if host == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host or "").is_loopback
+    except ValueError:
+        return False
+
+
+def _download_url_allowed(url: str) -> bool:
+    """Dependency bundles are fetched over https, except from a local test/mirror server on loopback."""
+    parsed = urllib.parse.urlparse(url)
+    return parsed.scheme == "https" or (parsed.scheme == "http" and _is_loopback(parsed.hostname))
+
+
+def install_wheel_pack(plugin_dir: str, progress_callback: Optional[Callable[[str], None]] = None) -> bool:
+    """
+    Download (or take from the plugin folder, for offline installs) the dependency bundle matching this
+    platform and Python, check its sha256 and unpack it into dependencies_dir().
+
+    :returns: True if a bundle was unpacked
+    """
+    say = progress_callback or (lambda m: None)
+    name = pack_name()
+    hashes_file = os.path.join(plugin_dir, "deps-sha256.txt")
+    if not os.path.exists(hashes_file):
+        logger.info("No deps-sha256.txt: running from source")
+        say("✗ This copy of the plugin has no dependency bundle (running from source?). "
+            "Install opencv-python-headless, pandas and scikit-image in the Python of QGIS, or use the released plugin zip.")
+        return False
+    with open(hashes_file, encoding="utf-8") as f:
+        hashes = {line.split()[1]: line.split()[0] for line in f if len(line.split()) == 2}
+    if name not in hashes:
+        say(f"✗ No dependency bundle is published for {platform_id()} with Python "
+            f"{sys.version_info.major}.{sys.version_info.minor} ({name}).")
+        return False
+
+    with open(os.path.join(plugin_dir, "metadata.txt"), encoding="utf-8") as f:
+        version = next(l.split("=", 1)[1].strip() for l in f if l.startswith("version="))
+    url = os.environ.get("KARIOS_PACK_BASE_URL", PACK_BASE_URL.format(version=version)) + "/" + name
+    # https only: a plain http URL could be tampered with in transit (the sha256 is fetched
+    # from the same place), and a file:/ URL would read local files. Plain http stays
+    # accepted on loopback, where the CI and the tests serve the wheel packs locally.
+    if not _download_url_allowed(url):
+        say(f"✗ Refusing to download {name} from {url}: only https URLs are allowed "
+            "(plain http is accepted for loopback addresses only).")
+        return False
+
+    local = os.path.join(plugin_dir, name)  # offline install: the user drops the bundle here
+    downloaded = None
+    try:
+        if os.path.exists(local):
+            say(f"Using the dependency bundle found in the plugin folder: {name}")
+        else:
+            say(f"Downloading dependency bundle {name}...")
+            fd, downloaded = tempfile.mkstemp(suffix=".zip", dir=plugin_dir)
+            # Same handling as urlopen (proxies, redirects), with the scheme validated above.
+            with os.fdopen(fd, "wb") as out, urllib.request.build_opener().open(url, timeout=60) as r:
+                out.write(r.read())
+            local = downloaded
+        with open(local, "rb") as f:
+            digest = hashlib.sha256(f.read()).hexdigest()
+        if digest != hashes[name]:
+            raise ValueError("checksum mismatch: not the bundle this plugin version was released with")
+        say(f"Installing dependency bundle {name}...")
+        with zipfile.ZipFile(local) as z:
+            z.extractall(dependencies_dir(plugin_dir))
+        importlib.invalidate_caches()
+        return True
+    except Exception as e:
+        logger.error(f"Dependency bundle {name} not installed: {e}")
+        say(f"✗ Could not get the dependency bundle {name}: {e}")
+        say(f"To install it by hand: download {url}, put the file in {plugin_dir} (do not unzip it), "
+            "and restart QGIS.")
+        return False
+    finally:
+        if downloaded and os.path.exists(downloaded):
+            os.remove(downloaded)
+
+
+def dependencies_dir(plugin_dir: str) -> str:
+    """Folder of the bundled/installed dependencies for the running Python (compiled wheels are per Python)."""
+    return os.path.join(plugin_dir, "dependencies", f"cp{sys.version_info.major}{sys.version_info.minor}")
 
 try:
     from importlib import metadata
@@ -48,7 +159,6 @@ class DependencyInfo:
         package: Optional[str] = None,
         min_version: Optional[str] = None,
         optional: bool = False,
-        installable: bool = True,
     ):
         """
         Initialize dependency info.
@@ -58,15 +168,12 @@ class DependencyInfo:
         :param package: Pip package name (defaults to import_name)
         :param min_version: Minimum version string (e.g., "4.0.0")
         :param optional: Whether the dependency is optional
-        :param installable: Whether this package can be installed via pip
-                           (False for system-provided packages like QGIS bundled libs)
         """
         self.name = name
         self.import_name = import_name
         self.package = package or import_name
         self.min_version = min_version
         self.optional = optional
-        self.installable = installable
 
 
 class DependencyStatus:
@@ -114,115 +221,6 @@ class DependencyChecker:
         self.dependencies = dependencies
         self.results: Dict[str, DependencyStatus] = {}
 
-    @staticmethod
-    def parse_requirements(
-        requirements_path: str,
-        optional_packages: Optional[List[str]] = None,
-        version_map: Optional[Dict[str, str]] = None,
-    ) -> List[DependencyInfo]:
-        """
-        Parse a requirements.txt file and convert to DependencyInfo objects.
-
-        :param requirements_path: Path to requirements.txt file
-        :param optional_packages: List of package names to mark as optional
-        :param version_map: Dict mapping import names to min versions
-        :returns: List of DependencyInfo objects
-        """
-        if optional_packages is None:
-            optional_packages = []
-        if version_map is None:
-            version_map = {}
-
-        dependencies = []
-
-        if not os.path.exists(requirements_path):
-            logger.warning(f"Requirements file not found: {requirements_path}")
-            return dependencies
-
-        with open(requirements_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-
-                # Skip empty lines and comments
-                if not line or line.startswith("#"):
-                    continue
-
-                # Skip options like -r, -e, --extra-index-url, etc.
-                if line.startswith("-"):
-                    continue
-
-                # Parse package specification
-                # Examples:
-                #   package-name
-                #   package-name==1.0.0
-                #   package-name>=1.0.0
-                #   package-name>=1.0.0,<2.0.0
-                #   package-name[extra]>=1.0.0
-
-                # Extract package name (before any version specifier or extras)
-                match = re.match(r"^([a-zA-Z0-9_-]+)", line)
-                if not match:
-                    logger.debug(f"Skipping invalid line: {line}")
-                    continue
-
-                package_name = match.group(1)
-                package_name_normalized = package_name.lower().replace("-", "_")
-
-                # Try to determine import name (usually same as package name)
-                import_name = package_name_normalized
-
-                # Common package name to import name mappings
-                import_name_map = {
-                    "scikit_image": "skimage",
-                    "scikit_learn": "sklearn",
-                    "opencv_python": "cv2",
-                    "opencv_python_headless": "cv2",
-                    "pillow": "PIL",
-                    "beautifulsoup4": "bs4",
-                }
-                import_name = import_name_map.get(
-                    package_name_normalized, import_name
-                )
-
-                # Extract version from requirements line if present
-                min_version = version_map.get(import_name)
-                if not min_version:
-                    version_match = re.search(r">=([0-9.]+)", line)
-                    if version_match:
-                        min_version = version_match.group(1)
-
-                # Determine if optional
-                is_optional = package_name_normalized in optional_packages
-
-                dependencies.append(
-                    DependencyInfo(
-                        name=package_name.replace("_", " ").title(),
-                        import_name=import_name,
-                        package=package_name,
-                        min_version=min_version,
-                        optional=is_optional,
-                    )
-                )
-
-        logger.info(
-            f"Parsed {len(dependencies)} dependencies from {requirements_path}"
-        )
-        return dependencies
-
-    def _get_pip_command(self) -> List[str]:
-        """Get the appropriate pip command for the current platform."""
-        python_executable = sys.executable
-        # Handle QGIS on Windows where sys.executable might be qgis-bin.exe
-        if os.path.basename(python_executable).lower() in ("qgis.exe", "qgis-bin.exe"):
-            python_w = os.path.join(os.path.dirname(python_executable), "pythonw.exe")
-            python_exe = os.path.join(os.path.dirname(python_executable), "python.exe")
-            if os.path.exists(python_exe):
-                python_executable = python_exe
-            elif os.path.exists(python_w):
-                python_executable = python_w
-
-        return [python_executable, "-m", "pip"]
-
     def _parse_version(self, version_str: str) -> Tuple[int, ...]:
         """Parse version string to comparable tuple."""
         if not version_str:
@@ -249,14 +247,14 @@ class DependencyChecker:
         if metadata:
             try:
                 return metadata.version(info.package)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("No metadata version for package %s: %s", info.package, e)
 
             # 2. Try metadata (import name)
             try:
                 return metadata.version(info.import_name)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("No metadata version for module %s: %s", info.import_name, e)
 
         # 3. Fallback: try to import and look for version attributes
         try:
@@ -276,8 +274,9 @@ class DependencyChecker:
                     if isinstance(version, tuple):
                         return ".".join(str(v) for v in version)
                     return str(version)
-        except Exception:
-            pass
+        except Exception as e:
+            # No version attribute: the dependency is reported as unknown.
+            logger.debug("Could not read the version of %s: %s", info.import_name, e)
 
         return None
 
@@ -329,17 +328,8 @@ class DependencyChecker:
             for s in self.results.values()
         )
 
-    def has_missing_installable(self) -> bool:
-        """Check if there are any missing installable non-optional dependencies."""
-        if not self.results:
-            self.check_all()
-        return any(
-            (not s.installed or not s.version_ok) and not s.info.optional and s.info.installable
-            for s in self.results.values()
-        )
-
     def get_missing(self) -> List[DependencyStatus]:
-        """Get list of all missing or invalid non-optional dependencies."""
+        """Get list of missing or invalid non-optional dependencies."""
         if not self.results:
             self.check_all()
         return [
@@ -347,108 +337,6 @@ class DependencyChecker:
             for s in self.results.values()
             if (not s.installed or not s.version_ok) and not s.info.optional
         ]
-
-    def get_missing_installable(self) -> List[DependencyStatus]:
-        """Get list of missing installable non-optional dependencies."""
-        if not self.results:
-            self.check_all()
-        return [
-            s
-            for s in self.results.values()
-            if (not s.installed or not s.version_ok) and not s.info.optional and s.info.installable
-        ]
-
-    def get_missing_non_installable(self) -> List[DependencyStatus]:
-        """Get list of missing non-installable dependencies (system-provided)."""
-        if not self.results:
-            self.check_all()
-        return [
-            s
-            for s in self.results.values()
-            if (not s.installed or not s.version_ok) and not s.info.optional and not s.info.installable
-        ]
-
-    def install_missing(
-        self,
-        target_dir: Optional[str] = None,
-        progress_callback: Optional[Callable[[str], None]] = None,
-    ) -> Dict[str, Tuple[bool, str]]:
-        """
-        Install all missing non-optional installable dependencies.
-
-        :param target_dir: Directory to install packages (isolated)
-        :param progress_callback: Optional callback for progress messages
-        :returns: Dictionary mapping import names to (success, message) tuples
-        """
-        if not self.results:
-            self.check_all()
-
-        results = {}
-        missing = self.get_missing_installable()
-
-        for status in missing:
-            success, msg = self._install_single(
-                status.info, target_dir=target_dir, callback=progress_callback
-            )
-            results[status.info.import_name] = (success, msg)
-
-            # Re-check this one immediately to update internal state
-            self.results[status.info.import_name] = self.check_single(status.info)
-
-        return results
-
-    def _install_single(
-        self,
-        info: DependencyInfo,
-        target_dir: Optional[str] = None,
-        callback: Optional[Callable[[str], None]] = None,
-    ) -> Tuple[bool, str]:
-        """Install a single dependency."""
-        pip_cmd = self._get_pip_command()
-        package_spec = info.package
-
-        # If it was installed but version was too low, we need to upgrade
-        if info.min_version:
-            package_spec = f"{info.package}>={info.min_version}"
-
-        cmd = pip_cmd + ["install", package_spec]
-
-        if target_dir:
-            cmd += ["--target", target_dir, "--upgrade", "--no-cache-dir"]
-
-        if callback:
-            callback(f"Installing {info.name}...")
-
-        try:
-            logger.info(f"Running command: {' '.join(cmd)}")
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-
-            if result.returncode == 0:
-                # We don't re-check here, install_missing will do it or caller will
-                msg = f"✓ {info.name} installed successfully"
-                if callback:
-                    callback(msg)
-                return True, msg
-            else:
-                error_msg = result.stderr.strip() or result.stdout.strip()
-                # Clean up error message if it's too long
-                if len(error_msg) > 200:
-                    error_msg = error_msg[:197] + "..."
-                msg = f"✗ Failed to install {info.name}: {error_msg}"
-                if callback:
-                    callback(msg)
-                return False, msg
-
-        except subprocess.TimeoutExpired:
-            msg = f"✗ Installation of {info.name} timed out"
-            if callback:
-                callback(msg)
-            return False, msg
-        except Exception as e:
-            msg = f"✗ Error installing {info.name}: {str(e)}"
-            if callback:
-                callback(msg)
-            return False, msg
 
     def summary(self) -> str:
         """Get a human-readable summary of dependency status."""
@@ -503,7 +391,6 @@ if HAS_QT:
             plugin_dir: str,
             dependencies: list,
             parent: QOptional[QObject] = None,
-            simulate_delay: bool = False,
         ):
             super().__init__(parent)
             self.plugin_dir = plugin_dir
@@ -511,26 +398,21 @@ if HAS_QT:
             self.signals = DependencyWorkerSignals()
             self._result = False
             self.messages = []
-            self.simulate_delay = simulate_delay
 
         def run(self):
             """Execute dependency check in background thread."""
             try:
+                logger.info("DependencyWorker.run() started")
                 self.signals.started.emit()
                 self.signals.progress_message.emit("Checking dependencies...")
 
-                # Add dependencies folder to sys.path only if it exists and is not empty
-                dependencies_dir = os.path.join(self.plugin_dir, "dependencies")
-                if os.path.exists(dependencies_dir):
-                    # Check if folder has actual content (not just empty)
-                    if os.listdir(dependencies_dir):
-                        if dependencies_dir not in sys.path:
-                            sys.path.insert(0, dependencies_dir)
-                            logger.info(f"Added dependencies to path: {dependencies_dir}")
-                    else:
-                        logger.debug(f"Dependencies folder is empty, not adding to path")
-                else:
-                    logger.debug(f"Dependencies folder does not exist, will create if needed")
+                # Add dependencies folder to sys.path
+                deps_dir = dependencies_dir(self.plugin_dir)
+                os.makedirs(deps_dir, exist_ok=True)
+
+                if deps_dir not in sys.path:
+                    sys.path.insert(0, deps_dir)
+                    logger.info(f"Added dependencies to path: {deps_dir}")
 
                 # Progress callback
                 def on_progress(message: str):
@@ -538,12 +420,11 @@ if HAS_QT:
                     self.signals.progress_message.emit(message)
 
                 # Run check and install
+                logger.info("Calling check_and_install_dependencies()...")
                 self._result = check_and_install_dependencies(
-                    self.dependencies,
-                    self.plugin_dir,
-                    progress_callback=on_progress,
-                    simulate_delay=self.simulate_delay,
+                    self.dependencies, self.plugin_dir, progress_callback=on_progress
                 )
+                logger.info(f"check_and_install_dependencies() returned: {self._result}")
 
             except Exception as e:
                 logger.error(f"Dependency worker error: {e}", exc_info=True)
@@ -576,6 +457,9 @@ if HAS_QT:
 
         def start(self):
             """Start background dependency checking."""
+            print("=" * 80)
+            print("BackgroundDependencyChecker: start() called")
+            print("=" * 80)
 
             def update_progress(message: str, is_error: bool = False):
                 if not message:
@@ -597,30 +481,10 @@ if HAS_QT:
             self.worker.start()
 
         def _extract_status_message(self, msg: str) -> str:
-            """Extract a clean status message for progress display."""
-            if not msg:
-                return ""
-
-            if "Installing" in msg:
-                match = re.search(r"Installing\s+([^\s(]+)", msg)
-                if match:
-                    return f"Installing {match.group(1)}..."
-                return "Installing dependencies..."
-
-            if "successfully" in msg or "✓" in msg:
-                match = re.search(r"[✓]\s+([^\s]+)\s+installed", msg)
-                if match:
-                    return f"✓ {match.group(1)} ready"
-                return "✓ Dependency ready"
-
-            if "All dependencies satisfied" in msg:
+            """Status line shown in the panel: messages are written to be shown as they are."""
+            if msg == "All dependencies satisfied":
                 return "✓ Dependencies ready"
-
-            # If it's an error, return it as is (will be handled by update_progress)
-            if "✗" in msg or "Failed" in msg or "Error" in msg:
-                return msg
-
-            return msg if len(msg) < 60 else None
+            return msg
 
         def _on_finished(self, success: bool):
             """Handle worker completion."""
@@ -628,7 +492,7 @@ if HAS_QT:
                 self.result_dockwidget, "set_progress_visible"
             ):
                 if success:
-                    self.result_dockwidget.set_progress_visible(False)
+                    self.result_dockwidget.set_progress_status("✓ Dependencies ready")
                 else:
                     # Installation failed
                     if hasattr(self.worker, "messages"):
@@ -639,7 +503,7 @@ if HAS_QT:
                                     self.result_dockwidget._all_messages.append(m)
 
                     self.result_dockwidget.set_progress_status(
-                        "⚠ Dependency error - click for details", is_error=True
+                        "⚠ Dependencies missing - click for details", is_error=True
                     )
 
             if self.on_complete:
@@ -659,284 +523,14 @@ if HAS_QT:
         """
         Start background dependency checking.
         """
+        print("=" * 80)
+        print("check_dependencies_background() called")
+        print("=" * 80)
         checker = BackgroundDependencyChecker(
             iface, plugin_dir, dependencies, on_complete, result_dockwidget
         )
         checker.start()
         return checker
-
-
-# ============================================================================
-# Qt Dialog Functions
-# ============================================================================
-
-if HAS_QT:
-    from qgis.PyQt.QtCore import Qt, QSize, QCoreApplication
-    from qgis.PyQt.QtWidgets import (
-        QDialog,
-        QVBoxLayout,
-        QHBoxLayout,
-        QLabel,
-        QPushButton,
-        QListWidget,
-        QListWidgetItem,
-        QTextEdit,
-        QProgressBar,
-        QMessageBox,
-    )
-
-    class DependencyDialog(QDialog):
-        """Qt dialog for displaying and installing missing dependencies."""
-
-        def __init__(
-            self,
-            checker: DependencyChecker,
-            iface: Any,
-            title: str = "Missing Dependencies",
-            message: str = "The following dependencies are missing:",
-            parent: Any = None,
-            auto_install: bool = True,
-        ):
-            super().__init__(parent)
-            self.checker = checker
-            self.iface = iface
-            self.title = title
-            self.message = message
-            self.install_target = None
-            self.auto_install = auto_install
-            self._setup_ui()
-            
-            # Auto-start installation if requested
-            if self.auto_install:
-                QCoreApplication.processEvents()  # Let dialog render first
-                self._on_install_clicked()
-
-        def _setup_ui(self):
-            """Set up the dialog UI."""
-            self.setWindowTitle(self.title)
-            self.setMinimumSize(500, 400)
-            self.setModal(True)
-
-            layout = QVBoxLayout()
-            self.setLayout(layout)
-
-            # Message label
-            msg_label = QLabel(self.message)
-            msg_label.setWordWrap(True)
-            layout.addWidget(msg_label)
-
-            # List of missing dependencies
-            self.list_widget = QListWidget()
-            self.list_widget.setMinimumHeight(150)
-            missing = self.checker.get_missing()
-            for status in missing:
-                item_text = f"{status.info.name}"
-                if status.info.min_version:
-                    item_text += f" (needs v{status.info.min_version})"
-                if status.installed and not status.version_ok:
-                    item_text += f" [installed: {status.version}]"
-                else:
-                    item_text += " [not installed]"
-                item = QListWidgetItem(item_text)
-                self.list_widget.addItem(item)
-            layout.addWidget(QLabel("Missing dependencies:"))
-            layout.addWidget(self.list_widget)
-
-            # Progress bar (indeterminate, visible during install)
-            self.progress_bar = QProgressBar()
-            self.progress_bar.setVisible(False)
-            self.progress_bar.setRange(0, 0)  # Indeterminate
-            self.progress_bar.setTextVisible(True)
-            self.progress_bar.setFormat("%p% - Checking and installing...")
-            layout.addWidget(self.progress_bar)
-
-            # Log text (hidden initially)
-            self.log_text = QTextEdit()
-            self.log_text.setVisible(False)
-            self.log_text.setReadOnly(True)
-            self.log_text.setMaximumHeight(100)
-            layout.addWidget(QLabel("Installation log:"))
-            layout.addWidget(self.log_text)
-
-            # Status label
-            self.status_label = QLabel("")
-            self.status_label.setWordWrap(True)
-            layout.addWidget(self.status_label)
-
-            # Buttons
-            button_layout = QHBoxLayout()
-            button_layout.addStretch()
-
-            self.install_button = QPushButton("Install Missing")
-            self.install_button.clicked.connect(self._on_install_clicked)
-            button_layout.addWidget(self.install_button)
-
-            self.close_button = QPushButton("Close")
-            self.close_button.clicked.connect(self.accept)
-            self.close_button.setEnabled(False)  # Disabled until install completes
-            button_layout.addWidget(self.close_button)
-
-            layout.addLayout(button_layout)
-
-        def _on_install_clicked(self):
-            """Handle install button click."""
-            self.install_button.setEnabled(False)
-            self.close_button.setEnabled(False)
-            self.progress_bar.setVisible(True)
-            self.log_text.setVisible(True)
-            self.status_label.setText("Checking and installing dependencies...")
-
-            # Set installation target
-            if self.install_target is None:
-                self.install_target = os.path.join(
-                    self.iface and hasattr(self.iface, "mainWindow") and
-                    getattr(self.iface.mainWindow(), "plugin_dir", None) or
-                    os.path.dirname(__file__),
-                    "dependencies",
-                )
-
-            def log_message(msg: str):
-                """Add message to log."""
-                self.log_text.append(msg)
-                self.log_text.scrollToBottom()
-                # Update status label with latest message
-                clean_msg = msg.replace("✓ ", "").replace("✗ ", "")
-                if len(clean_msg) > 50:
-                    clean_msg = clean_msg[:47] + "..."
-                self.status_label.setText(clean_msg)
-
-            # Run installation in background thread
-            self.worker = DependencyWorker(
-                os.path.dirname(self.install_target),
-                [s.info for s in self.checker.get_missing()],
-                simulate_delay=True,
-            )
-            self.worker.signals.started.connect(
-                lambda: log_message("Starting installation...")
-            )
-            self.worker.signals.progress_message.connect(log_message)
-            self.worker.signals.finished.connect(self._on_install_finished)
-            self.worker.start()
-
-        def _on_install_finished(self, success: bool):
-            """Handle installation completion."""
-            self.progress_bar.setVisible(False)
-            self.install_button.setEnabled(True)
-            self.close_button.setEnabled(True)
-
-            # Re-check dependencies
-            self.checker.check_all()
-
-            if success and not self.checker.has_missing():
-                self.status_label.setText("✓ All dependencies installed successfully!")
-                QMessageBox.information(
-                    self,
-                    "Success",
-                    "All dependencies installed successfully!",
-                )
-                self.accept()
-            else:
-                self.status_label.setText("⚠ Installation incomplete")
-                QMessageBox.warning(
-                    self,
-                    "Installation Incomplete",
-                    "Some dependencies could not be installed. "
-                    "Please try installing them manually.",
-                )
-                # Refresh the list
-                self.list_widget.clear()
-                missing = self.checker.get_missing()
-                for status in missing:
-                    item_text = f"{status.info.name}"
-                    if status.info.min_version:
-                        item_text += f" (needs v{status.info.min_version})"
-                    item_text += " [still missing]"
-                    item = QListWidgetItem(item_text)
-                    self.list_widget.addItem(item)
-
-    def show_dependency_dialog(
-        checker: DependencyChecker,
-        iface: Any,
-        title: str = "Missing Dependencies",
-        message: str = "The following dependencies are missing:",
-        on_install_complete: Optional[Callable[[bool], None]] = None,
-    ) -> bool:
-        """
-        Show a Qt dialog for missing dependencies with install button.
-
-        :param checker: DependencyChecker instance with results
-        :param iface: QGIS interface instance
-        :param title: Dialog title
-        :param message: Message to display
-        :param on_install_complete: Optional callback(success: bool)
-        :returns: True if all dependencies satisfied after dialog closes
-        """
-        if not HAS_QT:
-            logger.error("Qt not available, cannot show dependency dialog")
-            return False
-
-        dialog = DependencyDialog(checker, iface, title, message)
-
-        # Set installation target to plugin's dependencies folder
-        if hasattr(iface, "mainWindow"):
-            plugin_dir = getattr(iface.mainWindow(), "plugin_dir", None)
-        else:
-            plugin_dir = None
-
-        if plugin_dir is None:
-            # Try to get from checker or use current directory
-            plugin_dir = os.path.dirname(__file__)
-
-        dialog.install_target = os.path.join(plugin_dir, "dependencies")
-
-        # Add callback handling
-        original_on_complete = on_install_complete
-
-        def on_dialog_finished(result):
-            """Handle dialog completion."""
-            success = result == QDialog.Accepted or not checker.has_missing()
-            if original_on_complete:
-                original_on_complete(success)
-
-        dialog.finished.connect(on_dialog_finished)
-        dialog.exec_()
-
-        return not checker.has_missing()
-
-
-def check_and_show_dialog(
-    dependencies: List[DependencyInfo],
-    iface: Any,
-    title: str = "Missing Dependencies",
-    message: str = "The following dependencies are missing:",
-    critical: bool = True,
-) -> bool:
-    """
-    Check dependencies and show dialog if any are missing.
-
-    :param dependencies: List of DependencyInfo objects
-    :param iface: QGIS interface instance
-    :param title: Dialog title
-    :param message: Message to display
-    :param critical: If True, show critical error if dialog cannot be shown
-    :returns: True if all dependencies satisfied
-    """
-    checker = DependencyChecker(dependencies)
-    checker.check_all()
-
-    if checker.has_missing():
-        if HAS_QT:
-            return show_dependency_dialog(checker, iface, title, message)
-        else:
-            # No Qt, just log
-            logger.error(checker.summary())
-            if critical:
-                logger.critical(
-                    "Missing dependencies and Qt not available for dialog"
-                )
-            return False
-    else:
-        return True
 
 
 # ============================================================================
@@ -948,91 +542,54 @@ def check_and_install_dependencies(
     dependencies: List[DependencyInfo],
     plugin_dir: str,
     progress_callback: Optional[Callable[[str], None]] = None,
-    simulate_delay: bool = False,
 ) -> bool:
     """
-    Check dependencies and install missing installable ones to plugin directory.
+    Check dependencies and unpack the dependency bundle into the plugin directory if some are missing.
 
     :param dependencies: List of DependencyInfo objects
     :param plugin_dir: Plugin directory for isolated installation
     :param progress_callback: Optional callback(message: str) for real-time progress
-    :param simulate_delay: If True, add 10s delay to simulate installation time
-    :returns: True if all dependencies are satisfied (or only non-installable ones missing)
+    :returns: True if all dependencies are satisfied
     """
+    logger.info("=" * 60)
+    logger.info("check_and_install_dependencies() CALLED")
+    logger.info("=" * 60)
     logger.info("Starting dependency check")
 
+    target_dir = dependencies_dir(plugin_dir)
+    os.makedirs(target_dir, exist_ok=True)
+
+    if target_dir not in sys.path:
+        sys.path.insert(0, target_dir)
+
     checker = DependencyChecker(dependencies)
-
-    # Check phase with simulated delay
-    if progress_callback:
-        progress_callback("Checking dependencies...")
-
-    if simulate_delay:
-        import time
-        # Simulate check time (part of 10s total)
-        for i in range(1, 4):
-            if progress_callback:
-                progress_callback(f"Checking... ({i}/3)")
-            time.sleep(3)
-
     checker.check_all()
 
-    # Check for missing non-installable dependencies first (system-provided)
-    missing_non_installable = checker.get_missing_non_installable()
-    if missing_non_installable:
-        logger.warning("Missing system-provided dependencies (cannot install):")
-        for s in missing_non_installable:
-            logger.warning(f"  - {s.info.name} ({s.info.import_name})")
-        if progress_callback:
-            progress_callback("⚠ Some system dependencies missing")
+    missing = checker.get_missing()
+    if not missing:
+        logger.info("All dependencies satisfied")
+        return True
 
-    # Only set up target dir if there are installable packages to install
-    missing_installable = checker.get_missing_installable()
-    if missing_installable:
-        target_dir = os.path.join(plugin_dir, "dependencies")
-        os.makedirs(target_dir, exist_ok=True)
+    logger.info(f"Installing {len(missing)} missing or outdated dependencies")
+    if progress_callback:
+        progress_callback("Missing: " + ", ".join(st.info.name for st in missing) + " - getting the dependency bundle")
 
-        if target_dir not in sys.path:
-            sys.path.insert(0, target_dir)
-
-        logger.info(f"Installing {len(missing_installable)} missing installable dependencies")
-        if progress_callback:
-            progress_callback(f"Found {len(missing_installable)} packages to install...")
-
-        # Simulate remaining delay during installation (10s total - check time)
-        if simulate_delay:
-            import time
-            remaining_delay = 7  # seconds
-            steps = 5
-            step_delay = remaining_delay / steps
-            for i in range(1, steps + 1):
-                if progress_callback:
-                    progress_callback(f"Installing dependencies... ({i}/{steps})")
-                time.sleep(step_delay)
-
-        # Use the checker to install missing installable ones
-        checker.install_missing(target_dir=target_dir, progress_callback=progress_callback)
-
-        # Final re-check
+    # numpy/scipy/matplotlib come with QGIS; the rest is in the dependency bundle
+    if install_wheel_pack(plugin_dir, progress_callback):
         checker.check_all()
-        if checker.has_missing_installable():
-            remaining = checker.get_missing_installable()
-            for s in remaining:
-                logger.error(f"Failed to satisfy dependency: {s.info.name}")
-            if progress_callback:
-                progress_callback("✗ Some dependencies failed to install")
-            return False
-
-        logger.info("All installable dependencies installed and verified")
+    if checker.has_missing():
+        names = ", ".join(st.info.name for st in checker.get_missing())
+        logger.error(f"Missing dependencies: {names}")
         if progress_callback:
-            progress_callback("✓ Dependencies ready")
-    else:
-        logger.info("All installable dependencies satisfied")
-        if progress_callback:
-            progress_callback("✓ All dependencies satisfied")
+            progress_callback(f"✗ Still missing: {names}")
+            if any(st.info.import_name in ("numpy", "scipy", "matplotlib", "osgeo") for st in checker.get_missing()):
+                progress_callback("NumPy, SciPy, Matplotlib and GDAL are part of QGIS: repair or reinstall QGIS.")
+        return False
 
-    # Return True if all installable deps are satisfied (non-installable ones are user's responsibility)
-    return not checker.has_missing_installable()
+    logger.info("All dependencies installed and verified")
+    if progress_callback:
+        progress_callback("All dependencies satisfied")
+    return True
 
 
 # ============================================================================
@@ -1042,11 +599,12 @@ def check_and_install_dependencies(
 if __name__ == "__main__":
     # Example configuration
     EXAMPLE_DEPENDENCIES = [
+        DependencyInfo("NumPy", "numpy", min_version="1.20.0"),
         DependencyInfo("SciPy", "scipy", min_version="1.7.0"),
-        DependencyInfo("NumPy", "numpy", min_version="1.20.0", optional=True),
-        DependencyInfo(
-            "scikit-image", "skimage", package="scikit-image", min_version="0.18.0"
-        ),
+        DependencyInfo("Matplotlib", "matplotlib", min_version="3.4.0"),
+        DependencyInfo("OpenCV", "cv2", package="opencv-python-headless"),
+        DependencyInfo("pandas", "pandas"),
+        DependencyInfo("scikit-image", "skimage", package="scikit-image"),
     ]
 
     checker = DependencyChecker(EXAMPLE_DEPENDENCIES)
@@ -1056,35 +614,3 @@ if __name__ == "__main__":
         print("\nSome dependencies are missing or outdated.")
     else:
         print("\n✓ All dependencies satisfied!")
-
-
-# ============================================================================
-# Exports (ensure functions are available even without Qt)
-# ============================================================================
-
-# Make sure show_dependency_dialog is always importable
-if not HAS_QT:
-    def show_dependency_dialog(
-        checker: DependencyChecker,
-        iface: Any,
-        title: str = "Missing Dependencies",
-        message: str = "The following dependencies are missing:",
-        on_install_complete: Optional[Callable[[bool], None]] = None,
-    ) -> bool:
-        """
-        Stub: Show a Qt dialog for missing dependencies.
-        
-        Qt is not available, so this just logs the missing dependencies.
-        
-        :param checker: DependencyChecker instance with results
-        :param iface: QGIS interface instance (unused)
-        :param title: Dialog title (unused)
-        :param message: Message to display (unused)
-        :param on_install_complete: Optional callback(success: bool)
-        :returns: False (dependencies not satisfied)
-        """
-        logger.error("Qt not available, cannot show dependency dialog")
-        logger.error(checker.summary())
-        if on_install_complete:
-            on_install_complete(False)
-        return False

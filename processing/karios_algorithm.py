@@ -15,6 +15,7 @@ import os
 import sys
 import tempfile
 import json
+import math
 from pathlib import Path
 
 from qgis.core import (
@@ -391,13 +392,21 @@ class KariosAlgorithm(QgsProcessingAlgorithm):
         feedback.pushInfo('KARIOS Processing Complete')
         feedback.pushInfo('=' * 50)
         feedback.pushInfo(f'CE90: {accuracy.ce90:.3f} pixels')
-        feedback.pushInfo(f'RMSE: {accuracy.rmse:.3f} pixels')
+        # from the raw statistics: works with any karios version (3.0 also provides them on AccuracyAnalysis)
+        st = accuracy.statistics
+        nan = float('nan')
+        ok = getattr(st, 'valid', True)
+        rmse = math.sqrt(st.mean_x**2 + st.mean_y**2 + st.std_x**2 + st.std_y**2) if ok else nan
+        min_error = math.hypot(st.min_x, st.min_y) if ok else nan
+        max_error = math.hypot(st.max_x, st.max_y) if ok else nan
+        std_dev = math.hypot(st.std_x, st.std_y) if ok else nan
+        feedback.pushInfo(f'RMSE: {rmse:.3f} pixels')
         feedback.pushInfo(f'Mean Error X: {accuracy.mean_x:.3f} pixels')
         feedback.pushInfo(f'Mean Error Y: {accuracy.mean_y:.3f} pixels')
-        feedback.pushInfo(f'Min Error: {accuracy.min_error:.3f} pixels')
-        feedback.pushInfo(f'Max Error: {accuracy.max_error:.3f} pixels')
-        feedback.pushInfo(f'Std Dev: {accuracy.std_dev:.3f} pixels')
-        feedback.pushInfo(f'Number of Key Points: {accuracy.num_points}')
+        feedback.pushInfo(f'Min Error: {min_error:.3f} pixels')
+        feedback.pushInfo(f'Max Error: {max_error:.3f} pixels')
+        feedback.pushInfo(f'Std Dev: {std_dev:.3f} pixels')
+        feedback.pushInfo(f'Number of Key Points: {st.sample_pixel if ok else 0}')
         feedback.pushInfo('=' * 50)
         
         # Prepare outputs

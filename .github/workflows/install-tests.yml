@@ -100,9 +100,9 @@ jobs:
       - name: Install QGIS
         run: |
           conda install -y "qgis=${{ matrix.qgis }}.*" numpy scipy matplotlib
-          # what the zip must bring: take them out if QGIS pulled them in
-          conda remove --force -y py-opencv opencv libopencv scikit-image 2>/dev/null || true
-          if python -c "import cv2" 2>/dev/null || python -c "import skimage" 2>/dev/null; then echo "OpenCV or scikit-image still in the environment" >&2; exit 1; fi
+          # what the zip must bring: they must not come with QGIS (not removed: that broke QGIS on Windows)
+          conda list | grep -i -E "opencv|scikit-image|pandas" || true
+          if python -c "import cv2" 2>/dev/null || python -c "import skimage" 2>/dev/null; then echo "OpenCV or scikit-image come with QGIS: cannot test the pack" >&2; exit 1; fi
       - uses: actions/download-artifact@v4
         with:
           name: plugin-zip

@@ -99,10 +99,12 @@ jobs:
           activate-environment: karios
       - name: Install QGIS
         run: |
-          conda install -y "qgis=${{ matrix.qgis }}.*" numpy scipy matplotlib
-          # what the zip must bring: they must not come with QGIS (not removed: that broke QGIS on Windows)
-          conda list | grep -i -E "opencv|scikit-image|pandas" || true
-          if python -c "import cv2" 2>/dev/null || python -c "import skimage" 2>/dev/null; then echo "OpenCV or scikit-image come with QGIS: cannot test the pack" >&2; exit 1; fi
+          # same environment as the image-quality-toolset CI (scikit-image and pip in the solve: conda-forge QGIS
+          # on Windows failed to load its DLLs without them), then take out what the zip must bring
+          conda install -y "qgis=${{ matrix.qgis }}.*" numpy scipy matplotlib scikit-image pip
+          pip uninstall -y scikit-image imageio tifffile lazy_loader networkx
+          conda list | grep -i -E "^(qgis|python|numpy|libgdal|gdal|proj|opencv|scikit-image|pandas) " || true
+          if python -c "import cv2" 2>/dev/null || python -c "import skimage" 2>/dev/null; then echo "OpenCV or scikit-image still in the environment: cannot test the pack" >&2; exit 1; fi
       - uses: actions/download-artifact@v4
         with:
           name: plugin-zip
